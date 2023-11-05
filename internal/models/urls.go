@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+type UrlModelInterface interface {
+	Insert(url string) (string, error)
+	Get(url string) (Url, error)
+}
+
 type Url struct {
 	ID        int       `json:"id"`
 	URL       string    `json:"url"`

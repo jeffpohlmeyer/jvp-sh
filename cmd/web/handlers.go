@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/jeffpohlmeyer/jvp-sh/internal/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -68,4 +70,47 @@ func (app *application) redirectCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/%s+", redirect), http.StatusSeeOther)
+}
+
+func (app *application) redirectShow(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the "shortUrl" parameter from the query string. If none exists,
+	// then we redirect the user to the homepage.
+	shortUrl := r.URL.Query().Get(":shortUrl")
+	if shortUrl == "" {
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	// Use the url model's Get() method to retrieve the data for a specific
+	// url based on the shortUrl value. If no matching record is found, we
+	// redirect the user to the homepage.
+	url, err := app.urls.Get(shortUrl)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientError(w, http.StatusNotFound)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	lastChar := shortUrl[len(shortUrl)-1:]
+	if lastChar == "+" {
+		files := []string{
+			"./ui/html/base.html",
+			"./ui/html/partials/nav.html",
+			"./ui/html/pages/home.html",
+		}
+
+		ts, err := template.ParseFiles(files...)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+
+		err = ts.ExecuteTemplate(w, "base", nil)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+	}
+	http.Redirect(w, r, url.URL, http.StatusPermanentRedirect)
 }

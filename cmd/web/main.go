@@ -31,7 +31,7 @@ type config struct {
 type application struct {
 	config config
 	logger *slog.Logger
-	urls   *models.UrlModel
+	urls   models.UrlModelInterface
 }
 
 func main() {

@@ -13,6 +13,8 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
 
 	router.HandlerFunc(http.MethodGet, "/", app.home)
+	router.HandlerFunc(http.MethodPost, "/", app.redirectCreate)
+	router.HandlerFunc(http.MethodGet, "/:shortUrl", app.redirectShow)
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
