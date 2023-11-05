@@ -1,5 +1,0 @@
-[build]
-cmd = "go build -o ./tmp/main ./cmd/web"
-
-[misc]
-clean_on_exit = true
