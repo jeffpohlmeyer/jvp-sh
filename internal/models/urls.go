@@ -41,8 +41,8 @@ func generateRandomHexString(length int) (string, error) {
 	return hexString, nil
 }
 
-func (m *UrlModel) Insert(url string) (string, error) {
-	redirect, err := generateRandomHexString(8)
+func (m *UrlModel) Insert(redirect string) (string, error) {
+	url, err := generateRandomHexString(8)
 	if err != nil {
 		return "", err
 	}
@@ -56,7 +56,7 @@ func (m *UrlModel) Insert(url string) (string, error) {
 		return "", err
 	}
 
-	return redirect, nil
+	return url, nil
 }
 
 func (m *UrlModel) Get(url string) (Url, error) {
