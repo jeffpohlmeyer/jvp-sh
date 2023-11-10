@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/go-playground/form/v4"
 	"github.com/jeffpohlmeyer/jvp-sh/internal/models"
 	"github.com/joho/godotenv"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -29,9 +31,11 @@ type config struct {
 }
 
 type application struct {
-	config config
-	logger *slog.Logger
-	urls   models.UrlModelInterface
+	config        config
+	logger        *slog.Logger
+	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
+	urls          models.UrlModelInterface
 }
 
 func main() {
@@ -61,10 +65,20 @@ func main() {
 
 	logger.Info("database connection pool established")
 
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	formDecoder := form.NewDecoder()
+
 	app := &application{
-		config: cfg,
-		logger: logger,
-		urls:   &models.UrlModel{DB: db},
+		config:        cfg,
+		logger:        logger,
+		templateCache: templateCache,
+		formDecoder:   formDecoder,
+		urls:          &models.UrlModel{DB: db},
 	}
 
 	srv := &http.Server{
