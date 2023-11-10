@@ -3,7 +3,10 @@
 <h2>Shorten any URL!</h2>
 <form action="/" method="post">
     <label for="url">URL</label>
-    <input type="text" name="url" id="url" />
+    <input type="text" name="url" id="url" value="{{.Form.Url}}" />
+    {{with .Form.FieldErrors.url}}
+        <small>{{.}}</small>
+    {{end}}
     <input type="submit" value="Shorten" />
 </form>
 {{end}}
