@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "99542436-247e-44dd-ac73-12f0d50e0102",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "46a88650-b014-45d4-a70f-8ad19b5bcea1",
+  "prevId": "c7225c05-5a6f-4e9d-b96c-80ce559387f3",
   "tables": {
     "session": {
       "name": "session",
@@ -69,7 +69,7 @@
           "name": "expires",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now() + '60 minutes'"
         },
         "user_id": {
@@ -188,7 +188,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      }
     }
   },
   "enums": {
