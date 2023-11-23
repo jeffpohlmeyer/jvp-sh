@@ -7,7 +7,8 @@ import {
   // DATABASE_PASSWORD
 } from '$env/static/private';
 // import { drizzle } from 'drizzle-orm/planetscale-serverless';
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 // import { connect } from '@planetscale/database';
 // import { migrate } from 'drizzle-orm/planetscale-serverless/migrator';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
