@@ -2,7 +2,7 @@ import type { Cookies } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { AUTH_TOKEN_NAME } from '$env/static/private';
 
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
