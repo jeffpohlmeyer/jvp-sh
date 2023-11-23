@@ -13,7 +13,6 @@ import { user, token } from '$lib/server/schema-postgres';
 import { schema } from './utils';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-  console.log('url', url);
   if (locals?.user?.id) {
     throw redirect(302, '/');
   }
