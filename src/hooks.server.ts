@@ -1,11 +1,11 @@
 // import { auth } from '$lib/server/lucia';
 import type { Handle } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
+import { AUTH_TOKEN_NAME } from '$env/static/private';
 
 import { eq } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
-import { session, user } from '$lib/server/schema-postgres';
+import { session, user } from '$lib/server/schema';
 
 export type UserReturnType = {
   id: string;
@@ -20,7 +20,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   // console.log('event', event);
   const { cookies } = event;
 
-  const auth_cookie = cookies.get('jvp-sh-session');
+  const auth_cookie = cookies.get(AUTH_TOKEN_NAME);
   if (auth_cookie) {
     const session_result = await db.select().from(session).where(eq(session.id, auth_cookie));
     if (session_result.length) {

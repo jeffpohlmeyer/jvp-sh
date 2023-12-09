@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
-export const schema = z.object({
-  email: z.string().email()
-});
+export const schema = {
+  email: z
+    .string()
+    .min(1, 'Please provide an email address')
+    .email('Please provide a valid email address')
+};

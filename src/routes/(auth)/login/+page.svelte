@@ -1,62 +1,54 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import { goto } from '$app/navigation';
+  import type { PageData, ActionData } from './$types';
+  import { enhance } from '$app/forms';
 
-  import { superForm } from 'sveltekit-superforms/client';
+  import TheCard from '$lib/components/TheCard.svelte';
+  import { Label } from '$lib/components/ui/label';
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
 
   export let data: PageData;
+  export let form: ActionData;
   let password_visible = false;
-  let message = '';
-  function handle_input(event: InputEvent) {
-    const target = event.target as HTMLInputElement;
-    $form.password = target.value;
-  }
-
-  const { form, errors, constraints, enhance } = superForm(data.form, {
-    resetForm: true,
-    onResult: async ({ result }) => {
-      console.log('result in login', result);
-      if (result.type === 'success') {
-        await goto('/');
-      } else if (result.type === 'failure') {
-        if (result.data?.message) {
-          message = result.data.message;
-        }
-      }
-    }
-  });
 </script>
 
-<h2>Log In</h2>
-{#if message}
-  <p>{message}</p>
-{/if}
-<form method="post" use:enhance>
-  <label for="email">Email</label>
-  <input
-    type="email"
-    name="email"
-    id="email"
-    {...$constraints.email}
-    bind:value={$form.email}
-    aria-invalid={$errors.email ? 'true' : undefined}
-  />
-  {#if $errors.email}
-    <small class="text-red-500">{$errors.email}</small>
-  {/if}
-  <label for="password">Password</label>
-  <input
-    type={password_visible ? 'text' : 'password'}
-    name="password"
-    id="password"
-    {...$constraints.password}
-    value={$form.password}
-    aria-invalid={$errors.password ? 'true' : undefined}
-    on:input={handle_input}
-  />
-  {#if $errors.email}
-    <small class="text-red-500">{$errors.password}</small>
-  {/if}
-  <input type="submit" value="Log In" />
-</form>
-<a href="/forgot-password">Forgot Password</a>
+<TheCard title="Log In">
+  <span slot="title">Log In</span>
+  <span slot="sub-title">
+    If you have not created an account yet, then please
+    <a href="/register" class="text-primary underline">sign up</a>
+    first.
+  </span>
+  <form method="post" class="space-y-3" use:enhance>
+    <div>
+      <Label for="email">Email</Label>
+      <Input
+        type="email"
+        name="email"
+        id="email"
+        value={form?.email ?? data.email}
+        aria-invalid={form?.errors?.email ? 'true' : undefined}
+      />
+      {#if form?.errors?.email}
+        <small class="text-primary italic">{form.errors.email}</small>
+      {/if}
+    </div>
+    <div>
+      <Label for="password">Password</Label>
+      <Input
+        type={password_visible ? 'text' : 'password'}
+        name="password"
+        id="password"
+        value={data.password}
+        aria-invalid={form?.errors?.password ? 'true' : undefined}
+      />
+      {#if form?.errors?.password}
+        <small class="text-primary italic">{form.errors.password}</small>
+      {/if}
+    </div>
+    <Button type="submit" class="block w-full">Log In</Button>
+  </form>
+  <a href="/forgot-password" class="text-primary underline pt-8 pb-2 block text-center">
+    Forgot Password
+  </a>
+</TheCard>

@@ -10,7 +10,15 @@ declare global {
       user: import('./hooks.server').UserReturnType;
       // auth: import('lucia').AuthRequest;
     }
-    // interface PageData {}
+    interface PageData {
+      flash?: {
+        type: 'success' | 'error' | 'warning';
+        message: string;
+        title?: string;
+        clearable?: boolean;
+      };
+      urls?: import('$lib/server/schema/types').URLsType[];
+    }
     // interface Platform {}
   }
 }
