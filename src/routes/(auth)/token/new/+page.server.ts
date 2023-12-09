@@ -1,12 +1,13 @@
 import type { Actions, PageServerLoad } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 
-import { superValidate } from 'sveltekit-superforms/server';
 import { eq } from 'drizzle-orm';
+import { redirect } from 'sveltekit-flash-message/server';
 
 import { db } from '$lib/server/db';
-import { token, user } from '$lib/server/schema-postgres';
+import { token, user } from '$lib/server/schema';
 import { type EmailDataType, send_mail } from '$lib/utils/email';
+import { validate } from '$lib/utils/form';
 
 import { schema } from './util';
 
@@ -15,31 +16,39 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     throw redirect(302, '/');
   }
 
-  const form = await superValidate(schema);
-  form.data.token_type = (url.searchParams.get('token-type') ?? 'activation') as
-    | 'activation'
-    | 'reset-password';
-
-  return { form };
+  return {
+    email: '',
+    token_type: (url.searchParams.get('token-type') ?? 'activation') as
+      | 'activation'
+      | 'reset-password'
+  };
 };
 
 export const actions: Actions = {
   default: async ({ request, url }) => {
-    const form = await superValidate(request, schema);
-
-    if (!form.valid) {
-      return fail(400, { form });
+    const formData = Object.fromEntries(await request.formData());
+    const email = formData.email?.toString()?.trim().toLowerCase();
+    const form_data: { email: string; token_type: string } = {
+      email,
+      token_type: formData.token_type?.toString()?.trim().toLowerCase()
+    };
+    const { valid, errors } = validate<{ email: string; token_type: string }>({
+      schema_object: schema,
+      state_object: form_data
+    });
+    if (!valid) {
+      return fail(400, { errors, email });
     }
-
-    const email = form.data.email.trim().toLowerCase();
-    const token_type = form.data.token_type;
+    const token_type: 'activation' | 'reset-password' = form_data.token_type.toString() as
+      | 'activation'
+      | 'reset-password';
     const user_result = await db
       .select({ user_id: user.id })
       .from(user)
       .where(eq(user.email, email));
     if (!user_result.length) {
       return fail(404, {
-        form,
+        ...form_data,
         error: 'user-not-found',
         message: 'That email address is not associated with any account.'
       });
@@ -51,17 +60,15 @@ export const actions: Actions = {
       .returning({ id: token.id });
     if (!token_result.length) {
       return fail(500, {
-        form,
+        ...form_data,
         error: 'token-not-created',
         message: 'An error occurred while creating a token. Please try again.'
       });
     }
     const _token = token_result[0];
 
-    // send email
     const link = `${url.origin}/token/${_token.id}/${token_type}`;
     const to = email;
-
     const email_data: { [key in 'activation' | 'reset-password']: EmailDataType } = {
       activation: {
         to,

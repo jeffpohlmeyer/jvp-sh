@@ -1,45 +1,52 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 import { eq } from 'drizzle-orm';
-
-import { superValidate } from 'sveltekit-superforms/server';
+import { redirect } from 'sveltekit-flash-message/server';
 
 import { db } from '$lib/server/db';
 import { hash } from '$lib/utils/auth';
 import { send_mail } from '$lib/utils/email';
-import { user, token } from '$lib/server/schema-postgres';
+import { user, token } from '$lib/server/schema';
+import { type UseZodPayloadType, validate } from '$lib/utils/form';
 
-import { schema } from './utils';
+import { schema, object_refine } from './utils';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.user?.id) {
     throw redirect(302, '/');
   }
-  const form = await superValidate(schema);
-  return { form };
+  return { email: '', password: '', confirm_password: '' };
 };
 
 export const actions: Actions = {
   default: async ({ request, url }) => {
-    const form = await superValidate(request, schema);
-
-    if (!form.valid) {
-      return fail(400, { form });
+    const formData = Object.fromEntries(await request.formData());
+    const email = formData.email?.toString()?.trim().toLowerCase();
+    const { valid, errors } = validate<{
+      email: string;
+      password: string;
+      confirm_password: string;
+    }>({
+      schema_object: schema,
+      state_object: formData,
+      refine_object: object_refine
+    } as UseZodPayloadType);
+    if (!valid) {
+      return fail(400, { errors, email });
     }
 
-    const email = form.data.email.trim().toLowerCase();
     const result = await db.select().from(user).where(eq(user.email, email));
     if (result.length > 0) {
       return fail(401, {
-        form,
+        email,
         error: 'duplicate-account',
         message: 'An account with that email already exists'
       });
     }
 
     try {
-      const hashed_password = await hash(form.data.password);
+      const hashed_password = await hash(formData.password.toString());
       const new_user_result = await db
         .insert(user)
         .values({ email, hashed_password })
@@ -74,12 +81,12 @@ export const actions: Actions = {
       console.log('err', err);
       if (err.code === '23505') {
         return fail(400, {
-          form,
+          email,
           error: 'duplicate-account',
           message: 'An account with that email already exists'
         });
       } else {
-        return fail(500, { form, error: 'unknown', message: 'An unknown error occurred' });
+        return fail(500, { email, error: 'unknown', message: 'An unknown error occurred' });
       }
     }
 

@@ -2,7 +2,6 @@ import { sql } from 'drizzle-orm';
 import {
   pgTable,
   boolean,
-  bigint,
   integer,
   varchar,
   serial,
@@ -77,7 +76,8 @@ export const urls = pgTable('urls', {
   endpoint: varchar('endpoint').notNull(),
   redirect_link: varchar('redirect_link').notNull(),
   version: integer('version').notNull().default(1),
-  clicked: integer('clicked').notNull().default(0)
+  clicked: integer('clicked').notNull().default(0),
+  user_id: uuid('user_id').references(() => user.id)
 });
 
 export const token_type_enum = pgEnum('token_type', ['activation', 'reset-password']);

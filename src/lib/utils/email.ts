@@ -10,29 +10,6 @@ import {
   NOREPLY_EMAIL
 } from '$env/static/private';
 
-const config = {
-  host: EMAIL_HOST,
-  port: EMAIL_PORT,
-  secure: false
-} as TransportOptions;
-
-const auth = {
-  auth: {
-    api_key: MAILGUN_API_KEY,
-    domain: MAILGUN_DOMAIN
-  }
-};
-
-let transportArgument;
-if (dev) {
-  transportArgument = config;
-} else {
-  transportArgument = mg(auth);
-  // transportArgument = config;
-}
-
-export const transporter = nodemailer.createTransport(transportArgument);
-
 export type EmailHtmlType = {
   title: string;
   style?: string;
@@ -64,5 +41,28 @@ export async function send_mail(payload: EmailDataType) {
           </body>
         </html>
       `;
+
+  const config = {
+    host: EMAIL_HOST,
+    port: EMAIL_PORT,
+    secure: false
+  } as TransportOptions;
+
+  const auth = {
+    auth: {
+      api_key: MAILGUN_API_KEY,
+      domain: MAILGUN_DOMAIN
+    }
+  };
+
+  let transportArgument;
+  if (dev) {
+    transportArgument = config;
+  } else {
+    transportArgument = mg(auth);
+    // transportArgument = config;
+  }
+
+  const transporter = nodemailer.createTransport(transportArgument);
   await transporter.sendMail({ from, to, subject, text, html });
 }

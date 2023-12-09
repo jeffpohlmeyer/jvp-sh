@@ -1,38 +1,27 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import { superForm } from 'sveltekit-superforms/client';
+  import type { ActionData, PageData } from './$types';
+  import { page } from '$app/stores';
+
+  import URLInput from '$lib/components/URLInput.svelte';
 
   export let data: PageData;
-  export let url: string;
-
-  const { form, errors, constraints, enhance } = superForm(data.form, {
-    resetForm: true,
-    onResult: ({ result }) => {
-      if (result.type === 'success') {
-        url = result?.data?.url ?? '';
-      }
-    }
-  });
+  export let form: ActionData;
 </script>
 
-<h2>Shorten any URL!</h2>
-<form method="post" use:enhance>
-  <label for="url">URL</label>
-  <input
-    type="text"
-    name="redirect_link"
-    id="url"
-    {...$constraints.redirect_link}
-    bind:value={$form.redirect_link}
-    aria-invalid={$errors.redirect_link ? 'true' : undefined}
-  />
-  {#if $errors.redirect_link}
-    <small class="text-red-500">{$errors.redirect_link}</small>
-  {/if}
-  <input type="submit" value="Shorten" />
-</form>
-{#if url}
-  <h2>Success!</h2>
-  Your shortened url is
-  <a href={url} target="_blank">{url}</a>
-{/if}
+<div class="sm:max-w-2xl sm:mx-auto sm:w-full pb-3 space-y-3">
+  <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold">
+    Welcome to jvp.sh!
+  </h1>
+  <h2 class="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl">
+    A simple link shortener.
+    {#if $page.data.user_id}
+      You currently have {data.link_count} links associated with your
+      <a href="/account">account.</a>
+      Add another one below!
+    {:else}
+      No need to <a href="/register">create an account</a>
+      though you can if you'd like to track clicks of links you've shortened.
+    {/if}
+  </h2>
+  <URLInput title="Shorten any URL" {data} {form} />
+</div>

@@ -6,7 +6,8 @@ import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
-import { session } from '$lib/server/schema-postgres';
+import { session, user } from '$lib/server/schema';
+import type { SelectResult } from 'drizzle-orm/query-builders/select.types';
 
 export async function hash(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
@@ -81,4 +82,37 @@ export async function set_cookie(payload: SetCookiePayloadType): Promise<void> {
     expires: session.expires
   });
   return;
+}
+
+type GetUserFromCookiePayloadType = {
+  cookies: Cookies;
+};
+export async function get_user_from_cookie(payload: GetUserFromCookiePayloadType): Promise<{
+  id: string;
+  email: string;
+  hashed_password: string;
+  created_at: Date;
+  active: boolean;
+}> {
+  const { cookies } = payload;
+  if (!cookies) {
+    throw new Error('cookie input is required');
+  }
+  const session_id = cookies.get(AUTH_TOKEN_NAME);
+  if (!session_id) {
+    throw new Error('session_id is required');
+  }
+  const session_result = await db.select().from(session).where(eq(session.id, session_id));
+  if (!session_result.length) {
+    throw new Error('session not found');
+  }
+  const result = session_result[0];
+  if (!result.user_id) {
+    throw new Error('user_id not found');
+  }
+  const user_result = await db.select().from(user).where(eq(user.id, result.user_id));
+  if (!user_result.length) {
+    throw new Error('user not found');
+  }
+  return user_result[0];
 }

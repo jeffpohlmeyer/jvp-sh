@@ -1,34 +1,37 @@
 import type { Actions, PageServerLoad } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 
-import { superValidate } from 'sveltekit-superforms/server';
 import { eq } from 'drizzle-orm';
+import { redirect } from 'sveltekit-flash-message/server';
 
 import { db } from '$lib/server/db';
-import { token, user } from '$lib/server/schema-postgres';
+import { token, user } from '$lib/server/schema';
+import { validate } from '$lib/utils/form';
+import { send_mail } from '$lib/utils/email';
 
 import { schema } from './utils';
-import { send_mail } from '$lib/utils/email';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.user?.id) {
     throw redirect(300, '/');
   }
-  const form = await superValidate(schema);
 
-  return { form };
+  return { email: '' };
 };
 
 export const actions: Actions = {
   default: async ({ request, url }) => {
-    const form = await superValidate(request, schema);
-
-    if (!form.valid) {
-      return fail(400, { form });
+    const formData = Object.fromEntries(await request.formData());
+    const { valid, errors } = validate<{ email: string }>({
+      schema_object: schema,
+      state_object: formData
+    });
+    if (!valid) {
+      return fail(400, { errors, ...formData });
     }
 
     try {
-      const email = form.data.email.trim().toLowerCase();
+      const email = formData.email.toString().trim().toLowerCase();
       const user_result = await db
         .select({ user_id: user.id })
         .from(user)
@@ -59,7 +62,7 @@ export const actions: Actions = {
     } catch (err) {
       console.log('err', err);
       return fail(500, {
-        form,
+        ...formData,
         error: 'token-not-created',
         message: 'An error occurred while creating a token. Please try again.'
       });
