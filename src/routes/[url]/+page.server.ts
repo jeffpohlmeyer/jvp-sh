@@ -10,7 +10,7 @@ export const load: PageServerLoad = async (event) => {
   const { params } = event;
   const { url: _url } = params;
   if (!_url) {
-    throw redirect(301, '/', { type: 'error', message: 'URL not found.' }, event);
+    throw redirect(302, '/', { type: 'error', message: 'URL not found.' }, event);
   }
 
   const is_plus = _url.at(-1) === '+';
@@ -26,7 +26,7 @@ export const load: PageServerLoad = async (event) => {
     .where(eq(urls.endpoint, url))
     .orderBy(desc(urls.version));
   if (!result.length) {
-    throw redirect(301, '/', { type: 'error', message: 'URL not found.' }, event);
+    throw redirect(302, '/', { type: 'error', message: 'URL not found.' }, event);
   }
   const _redirect = result[0];
   const redirect_link = _redirect.redirect_link;

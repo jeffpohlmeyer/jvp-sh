@@ -23,5 +23,10 @@
       though you can if you'd like to track clicks of links you've shortened.
     {/if}
   </h2>
-  <URLInput title="Shorten any URL" {data} {form} />
+  <URLInput
+    title="Shorten any URL"
+    metadescription="A simple link shortener. No sign-up required."
+    {data}
+    {form}
+  />
 </div>

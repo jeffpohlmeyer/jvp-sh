@@ -1,13 +1,14 @@
-import type { Cookies } from '@sveltejs/kit';
+import { type Cookies, fail, type RequestEvent } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { AUTH_TOKEN_NAME } from '$env/static/private';
 
+import { redirect } from 'sveltekit-flash-message/server';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 
 import { db } from '$lib/server/db';
 import { session, user } from '$lib/server/schema';
-import type { SelectResult } from 'drizzle-orm/query-builders/select.types';
+import type { UserType } from '$lib/types';
 
 export async function hash(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
@@ -45,6 +46,7 @@ export async function create_session(user_id: string): Promise<SessionType> {
     .insert(session)
     .values({ user_id })
     .returning({ id: session.id, user_id: session.user_id, expires: session.expires });
+  console.log('session result', session_result);
   if (!session_result.length) {
     throw new Error('session could not be created');
   }
@@ -87,13 +89,9 @@ export async function set_cookie(payload: SetCookiePayloadType): Promise<void> {
 type GetUserFromCookiePayloadType = {
   cookies: Cookies;
 };
-export async function get_user_from_cookie(payload: GetUserFromCookiePayloadType): Promise<{
-  id: string;
-  email: string;
-  hashed_password: string;
-  created_at: Date;
-  active: boolean;
-}> {
+export async function get_user_from_cookie(
+  payload: GetUserFromCookiePayloadType
+): Promise<UserType> {
   const { cookies } = payload;
   if (!cookies) {
     throw new Error('cookie input is required');
@@ -114,5 +112,19 @@ export async function get_user_from_cookie(payload: GetUserFromCookiePayloadType
   if (!user_result.length) {
     throw new Error('user not found');
   }
-  return user_result[0];
+  return user_result[0] as UserType;
+}
+
+export async function logout_user<E extends RequestEvent>(
+  event: E,
+  message = 'You have been logged out.'
+) {
+  const { cookies } = event;
+  const session_id = cookies.get(AUTH_TOKEN_NAME);
+  if (!session_id) {
+    return fail(404, { error: 'token-not-found', message: 'Session token not found.' });
+  }
+  await invalidate_sessions({ session_id });
+  cookies.set(AUTH_TOKEN_NAME, '', { path: '/', maxAge: 0 });
+  throw redirect(302, '/', { type: 'success', message }, event);
 }

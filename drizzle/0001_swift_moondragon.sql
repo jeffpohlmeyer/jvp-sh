@@ -1,1 +1,0 @@
-ALTER TABLE "tokens" ALTER COLUMN "expires" SET NOT NULL;

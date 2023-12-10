@@ -11,9 +11,10 @@
   export let form: ActionData;
   export let title: string = '';
   export let action_text = 'Shorten';
+  export let metadescription = '';
 </script>
 
-<TheCard {title}>
+<TheCard {title} {metadescription}>
   <span slot="title">{title}</span>
   <form method="post" class="space-y-3" use:enhance>
     <Label for="url">URL</Label>

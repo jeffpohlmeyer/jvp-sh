@@ -16,6 +16,15 @@
     }
   }
 
+  $: if ($flash) {
+    let timeout = $flash.timeout ?? 3500;
+    if (timeout !== 0) {
+      setTimeout(() => {
+        $flash = undefined;
+      }, timeout);
+    }
+  }
+
   function get_bg_class(): string {
     switch ($flash?.type) {
       case 'success':
@@ -124,7 +133,7 @@
 
 {#if $flash}
   <div
-    class="mx-auto rounded-md p-4 absolute bottom-0 inset-x-0 w-[98vw] border sm:w-[95vw] md:w-3/4 max-w-2xl {get_bg_class()} {get_border_class()}"
+    class="mx-auto rounded-md p-4 absolute bottom-0 z-20 inset-x-0 w-[98vw] border sm:w-[95vw] md:w-3/4 max-w-2xl {get_bg_class()} {get_border_class()}"
   >
     <div class="flex">
       <div class="flex-shrink-0">

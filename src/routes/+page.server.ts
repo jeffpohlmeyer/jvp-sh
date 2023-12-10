@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { urls } from '$lib/server/schema';
 import { validate } from '$lib/utils/form';
-import { generateRandomString } from '$lib/utils';
+import { nanoid } from '$lib/utils/id';
 
 import { schema } from './utils';
 
@@ -36,7 +36,7 @@ export const actions: Actions = {
     if (!valid) {
       return fail(400, { errors, redirect_link });
     }
-    const endpoint = generateRandomString(8);
+    const endpoint = nanoid(8);
     const payload: { redirect_link: string; endpoint: string; version: number; user_id?: string } =
       { redirect_link, endpoint, version: 1 };
     if (locals.user?.id) {

@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1700492421834,
-      "tag": "0000_breezy_pepper_potts",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1700602939340,
-      "tag": "0001_swift_moondragon",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1700614770604,
-      "tag": "0002_new_mimic",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1700619638468,
-      "tag": "0003_tidy_the_anarchist",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1701286648256,
-      "tag": "0004_windy_jubilee",
+      "when": 1702227130670,
+      "tag": "0000_legal_whistler",
       "breakpoints": true
     }
   ]

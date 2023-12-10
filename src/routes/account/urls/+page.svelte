@@ -2,7 +2,7 @@
   import type { PageData } from './$types';
   import { page } from '$app/stores';
   import MetaTags from '$lib/components/MetaTags.svelte';
-  import UrlsTable from './urls-table.svelte';
+  import UrlsTable from '$lib/components/tables/urls-table.svelte';
 
   export let data: PageData;
 </script>
@@ -13,4 +13,4 @@
   siteUrl={$page.url.href}
 />
 
-<UrlsTable data={data.urls} />
+<UrlsTable access_type="regular" data={data.urls} />

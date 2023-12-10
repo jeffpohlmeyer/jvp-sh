@@ -8,7 +8,6 @@ declare global {
     }
     interface Locals {
       user: import('./hooks.server').UserReturnType;
-      // auth: import('lucia').AuthRequest;
     }
     interface PageData {
       flash?: {
@@ -16,21 +15,12 @@ declare global {
         message: string;
         title?: string;
         clearable?: boolean;
+        timeout?: number;
       };
       urls?: import('$lib/server/schema/types').URLsType[];
     }
     // interface Platform {}
   }
 }
-
-// declare global {
-//   namespace Lucia {
-//     type Auth = import('$lib/server/lucia').Auth;
-//     type DatabaseUserAttributes = {
-//       username: string;
-//     };
-//     type DatabaseSessionAttributes = {};
-//   }
-// }
 
 export {};

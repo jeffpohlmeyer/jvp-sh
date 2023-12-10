@@ -13,7 +13,7 @@ import { send_mail } from '$lib/utils/email';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   if (locals?.user?.id) {
-    throw redirect(300, '/');
+    throw redirect(302, '/');
   }
 
   return { email: url.searchParams.get('email') };

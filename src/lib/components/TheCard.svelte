@@ -4,9 +4,10 @@
   import * as Card from '$lib/components/ui/card';
 
   export let title = '';
+  export let metadescription = '';
 </script>
 
-<MetaTags pageTitle={title} siteUrl={$page.url.href} />
+<MetaTags pageTitle={title} siteUrl={$page.url.href} {metadescription} />
 
 <Card.Root class="sm:max-w-2xl sm:mx-auto sm:w-full {$$props.class}">
   <Card.Header>

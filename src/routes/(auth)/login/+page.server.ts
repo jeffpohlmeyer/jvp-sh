@@ -14,7 +14,7 @@ import { schema } from './utils';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.user?.id) {
-    throw redirect(300, '/');
+    throw redirect(302, '/');
   }
 
   return { email: '', password: '' };
@@ -48,7 +48,7 @@ export const actions: Actions = {
     } else {
       _user = result[0];
       active = _user.active;
-      hashed_password = _user.hashed_password;
+      hashed_password = _user.hashed_password as string;
     }
     const passwords_match = await bcrypt.compare(formData.password.toString(), hashed_password);
     if (!passwords_match) {
@@ -66,7 +66,7 @@ export const actions: Actions = {
       if (formData?.email) {
         url += `?email=${encodeURIComponent(formData.email.toString())}`;
       }
-      throw redirect(300, url);
+      throw redirect(302, url);
     }
     if (_user) {
       try {

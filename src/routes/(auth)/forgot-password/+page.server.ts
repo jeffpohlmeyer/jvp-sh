@@ -13,7 +13,7 @@ import { schema } from './utils';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.user?.id) {
-    throw redirect(300, '/');
+    throw redirect(302, '/');
   }
 
   return { email: '' };
