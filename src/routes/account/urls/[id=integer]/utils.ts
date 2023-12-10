@@ -1,5 +1,4 @@
 import { fail, type RequestEvent, type ServerLoadEvent } from '@sveltejs/kit';
-import type { RouteParams } from './$types';
 
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { eq } from 'drizzle-orm';
@@ -7,11 +6,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { urls } from '$lib/server/schema';
 
-export async function check_user_auth_load(
-  event:
-    | RequestEvent<Partial<Record<string, string>>, string | null>
-    | ServerLoadEvent<RouteParams, { user_id: string }, '/account/urls/[id=integer]/delete'>
-) {
+export async function check_user_auth_load<E extends ServerLoadEvent | RequestEvent>(event: E) {
   const { locals, params, url } = event;
   if (!locals?.user?.id) {
     throw redirect(
@@ -43,10 +38,27 @@ export async function check_user_auth_load(
   return _url;
 }
 
-export async function check_user_auth_actions(event, action: 'delete' | 'update') {
-  const form_data = Object.fromEntries(await event.request.formData());
-  const id = form_data.id ?? event.params.id;
+export async function check_user_auth_actions<E extends ServerLoadEvent | RequestEvent>(
+  event: E,
+  action: 'delete' | 'update'
+) {
   const { locals } = event;
+  type FormDataType = {
+    id: number;
+    endpoint: string;
+    redirect_link: string;
+    version: number;
+    user_id: string;
+  };
+  const formData = Object.fromEntries(await event.request.formData());
+  const form_data: FormDataType = {
+    id: +formData.id ?? event.params.id,
+    endpoint: formData.endpoint.toString() ?? '',
+    redirect_link: formData.redirect_link.toString() ?? '',
+    version: +formData.version ?? 0,
+    user_id: locals.user.id
+  };
+  const id = form_data.id ?? event.params.id;
 
   if (!locals?.user?.id) {
     setFlash({ type: 'error', message: 'You need to be logged in.' }, event);

@@ -30,15 +30,7 @@
     Your account is not yet active. Please click the link in the email that was previously sent to
     you. If you need a new activation link please fill out the form below.
   </span>
-  <form
-    method="post"
-    class="space-y-3"
-    use:enhance={() => {
-      return async ({ result, update }) => {
-        update();
-      };
-    }}
-  >
+  <form method="post" class="space-y-3" use:enhance>
     {#if form?.error}
       <Alert.Root slot="alert" variant="destructive" class="w-full">
         <Alert.Title>Error</Alert.Title>

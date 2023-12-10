@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { ObjectRefineType } from '$lib/utils/form';
 
 export const schema = {
-  email: z.string().email(),
+  email: z.string().min(1, 'Email is required').email(),
   password: z.string().min(8),
   confirm_password: z.string().min(8)
 };

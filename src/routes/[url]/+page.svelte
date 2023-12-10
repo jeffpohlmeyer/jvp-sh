@@ -2,12 +2,23 @@
   import type { PageData } from './$types';
   import { page } from '$app/stores';
 
+  import { getFlash } from 'sveltekit-flash-message';
+  import Icon from '@iconify/svelte';
+
   import { Button } from '$lib/components/ui/button';
   import MetaTags from '$lib/components/MetaTags.svelte';
   import TheCard from '$lib/components/TheCard.svelte';
 
   export let data: PageData;
   let iframe = false;
+
+  $: url = `${$page.url.protocol}//${$page.url.host}/${data.endpoint}`;
+
+  const flash = getFlash(page);
+  function copy_url() {
+    navigator.clipboard.writeText(url);
+    $flash = { type: 'success', message: 'Copied to Clipboard!', timeout: 2500 };
+  }
 </script>
 
 <MetaTags
@@ -17,7 +28,13 @@
 />
 
 <TheCard title="URL {data.endpoint}" class="mb-4">
-  <span slot="title">URL {$page.url.protocol}//{$page.url.host}/{data.endpoint}</span>
+  <span slot="title">Shortened URL</span>
+  <span slot="sub-title" class="space-x-3 flex items-center">
+    <span>{url}</span>
+    <Button variant="outline" size="xs" on:click={copy_url}>
+      <Icon icon="lucide:copy" class="w-4 h-4" />
+    </Button>
+  </span>
 
   <ul class="text-sm md:text-base lg:text-lg xl:text-xl pb-3">
     <li>
@@ -46,6 +63,6 @@
   <iframe
     src={data.redirect_link}
     title={data.redirect_link}
-    class="w-full h-[65%] rounded-md shadow-lg"
+    class="w-full h-[65%] rounded-md shadow-lg z-20 bg-background"
   ></iframe>
 {/if}

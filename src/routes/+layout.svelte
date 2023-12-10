@@ -9,6 +9,9 @@
   <header class="flex justify-between items-center py-4 px-4 xl:px-0">
     <h1><a href="/" class="no-underline">Home</a></h1>
     <div class="flex items-center space-x-2">
+      {#if $page.data.is_admin}
+        <a href="/admin" class="no-underline">Admin</a>
+      {/if}
       {#if $page.data.user_id}
         <a href="/account" class="no-underline">Account</a>
       {:else}

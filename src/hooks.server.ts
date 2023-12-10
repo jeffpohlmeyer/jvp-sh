@@ -1,4 +1,3 @@
-// import { auth } from '$lib/server/lucia';
 import type { Handle } from '@sveltejs/kit';
 import { AUTH_TOKEN_NAME } from '$env/static/private';
 
@@ -12,6 +11,7 @@ export type UserReturnType = {
   email: string;
   created_at: Date;
   active: boolean;
+  is_admin: boolean;
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -31,7 +31,8 @@ export const handle: Handle = async ({ event, resolve }) => {
             id: user.id,
             email: user.email,
             created_at: user.created_at,
-            active: user.active
+            active: user.active,
+            is_admin: user.is_admin
           })
           .from(user)
           .where(eq(user.id, user_id));

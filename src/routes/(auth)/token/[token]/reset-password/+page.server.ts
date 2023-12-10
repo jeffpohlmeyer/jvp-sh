@@ -7,13 +7,13 @@ import { redirect } from 'sveltekit-flash-message/server';
 import { db } from '$lib/server/db';
 import { create_session, hash, set_cookie } from '$lib/utils/auth';
 import { user, token } from '$lib/server/schema';
-import { UseZodPayloadType, validate } from '$lib/utils/form';
+import { type UseZodPayloadType, validate } from '$lib/utils/form';
 
 import { schema, object_refine } from './utils';
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals?.user?.id) {
-    throw redirect(300, '/');
+    throw redirect(302, '/');
   }
 
   return { password: '', confirm_password: '' };
@@ -35,13 +35,14 @@ export const actions: Actions = {
     }>({
       schema_object: schema,
       state_object: formData,
-      refine_object: object_refine
+      object_refine
     } as UseZodPayloadType);
     if (!valid) {
       return fail(400, { errors, ...form_data });
     }
 
     const hashed_password = await hash(form_data.password);
+    console.log('hashed_password', hashed_password);
     const token_result = await db.select().from(token).where(eq(token.id, form_data.token));
     if (!token_result.length) {
       throw redirect(

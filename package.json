@@ -9,7 +9,10 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
+		"format": "prettier --plugin-search-dir . --write .",
+		"drizzle:generate-pg": "drizzle-kit generate:pg --schema=./src/lib/server/schema/postgres.ts",
+		"drizzle:push-pg": "drizzle-kit push:pg",
+		"drizzle:seed-prod": "ts-node ./src/lib/server/seed/prod"
 	},
 	"dependencies": {
 		"bcryptjs": "^2.4.3",
@@ -26,7 +29,6 @@
 	},
 	"devDependencies": {
 		"@iconify/svelte": "^3.1.4",
-		"@lucia-auth/adapter-postgresql": "^2.0.2",
 		"@melt-ui/pp": "^0.1.4",
 		"@melt-ui/svelte": "^0.62.1",
 		"@playwright/test": "^1.40.0",
@@ -49,7 +51,7 @@
 		"eslint": "^8.28.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-svelte": "^2.30.0",
-		"lucia": "^2.7.3",
+		"nanoid": "^5.0.4",
 		"pg": "^8.11.3",
 		"postcss": "^8.4.24",
 		"postcss-load-config": "^4.0.1",

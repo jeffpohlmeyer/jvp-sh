@@ -8,6 +8,6 @@
   export { className as class };
 </script>
 
-<div class={cn('rounded-lg bg-secondary/50 text-foreground shadow-md', className)} {...$$restProps}>
+<div class={cn('rounded-lg bg-secondary/75 text-foreground shadow-md', className)} {...$$restProps}>
   <slot />
 </div>

@@ -2,7 +2,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 import { eq } from 'drizzle-orm';
-import { redirect } from 'sveltekit-flash-message/server';
+import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 import { db } from '$lib/server/db';
 import { hash } from '$lib/utils/auth';
@@ -20,7 +20,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, url }) => {
+  default: async (event) => {
+    const { request, url } = event;
     const formData = Object.fromEntries(await request.formData());
     const email = formData.email?.toString()?.trim().toLowerCase();
     const { valid, errors } = validate<{
@@ -30,7 +31,7 @@ export const actions: Actions = {
     }>({
       schema_object: schema,
       state_object: formData,
-      refine_object: object_refine
+      object_refine
     } as UseZodPayloadType);
     if (!valid) {
       return fail(400, { errors, email });
@@ -38,10 +39,12 @@ export const actions: Actions = {
 
     const result = await db.select().from(user).where(eq(user.email, email));
     if (result.length > 0) {
-      return fail(401, {
+      setFlash({ type: 'error', message: 'An account with that email already exists' }, event);
+      return fail(400, {
         email,
-        error: 'duplicate-account',
-        message: 'An account with that email already exists'
+        password: '',
+        confirm_password: '',
+        error: 'duplicate-account'
       });
     }
 
@@ -80,13 +83,15 @@ export const actions: Actions = {
     } catch (err) {
       console.log('err', err);
       if (err.code === '23505') {
+        setFlash({ type: 'error', message: 'An account with that email already exists' }, event);
         return fail(400, {
           email,
-          error: 'duplicate-account',
-          message: 'An account with that email already exists'
+          error: 'duplicate-account'
         });
       } else {
-        return fail(500, { email, error: 'unknown', message: 'An unknown error occurred' });
+        setFlash({ type: 'error', message: 'An unknown error occurred' }, event);
+
+        return fail(500, { email, error: 'unknown' });
       }
     }
 

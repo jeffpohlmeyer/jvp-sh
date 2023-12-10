@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const schema = {
   password: z.string().min(8),
   confirm_password: z.string().min(8),
-  token: z.string().uuid()
+  token: z.string().refine((v) => v.startsWith('token_'))
 };
 
 export const object_refine = [

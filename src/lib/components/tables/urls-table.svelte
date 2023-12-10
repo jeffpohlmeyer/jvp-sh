@@ -13,12 +13,13 @@
   import type { URLsType } from '$lib/server/schema/types';
 
   export let data: URLsType[] = [];
+  export let access_type: 'admin' | 'regular';
 
   const table = createTable(readable(data), {
     sort: addSortBy({ initialSortKeys: [{ id: 'created_at', order: 'desc' }] })
   });
 
-  const columns = table.createColumns([
+  const _columns = [
     table.column({
       accessor: ({ endpoint }) => endpoint,
       header: 'JVP.sh Endpoint',
@@ -38,14 +39,30 @@
       cell: ({ value }) => new Date(value).toLocaleString()
     }),
     table.column({ accessor: 'version', header: 'Version' }),
-    table.column({ accessor: 'clicked', header: 'Number of Clicks' }),
-    table.column({
-      accessor: ({ id }) => id,
-      header: '',
-      cell: ({ value }) => createRender(UrlTableActions, { id: value }),
-      plugins: { sort: { disable: true } }
-    })
-  ]);
+    table.column({ accessor: 'clicked', header: 'Number of Clicks' })
+  ];
+  if (access_type === 'regular') {
+    _columns.push(
+      table.column({
+        accessor: ({ id }) => id,
+        header: '',
+        cell: ({ value }) => createRender(UrlTableActions, { id: value }),
+        plugins: { sort: { disable: true } }
+      })
+    );
+  } else {
+    _columns.push(
+      table.column({
+        accessor: 'email',
+        header: 'Owner',
+        cell: ({ value }) => {
+          if (!value) return '';
+          return value;
+        }
+      })
+    );
+  }
+  const columns = table.createColumns(_columns);
 
   const { headerRows, pageRows, tableAttrs, tableBodyAttrs } = table.createViewModel(columns);
 </script>
