@@ -16,7 +16,7 @@ export async function check_user_auth_load<E extends ServerLoadEvent | RequestEv
       event
     );
   }
-  const id: number = +(params.id ?? '');
+  const id: string = params.id ?? '';
   const url_result = await db.select().from(urls).where(eq(urls.id, id));
   if (!url_result.length) {
     throw redirect(
