@@ -7,7 +7,7 @@
 
 <div class="flex flex-col h-100svh md:h-100lvh max-w-7xl mx-auto">
   <header class="flex justify-between items-center py-4 px-4 xl:px-0">
-    <h1><a href="/" class="no-underline">Home</a></h1>
+    <a href="/" class="no-underline">Home</a>
     <div class="flex items-center space-x-2">
       {#if $page.data.is_admin}
         <a href="/admin" class="no-underline">Admin</a>
