@@ -1,27 +1,36 @@
 <script lang="ts">
-  import type { ActionData, PageData } from './$types';
-  import { enhance } from '$app/forms';
+  import { valibotClient } from 'sveltekit-superforms/adapters';
+  import { superForm } from 'sveltekit-superforms/client';
 
+  import type { PageData } from './$types';
+  import { schema } from './utils';
+
+  import { afterNavigate } from '$app/navigation';
   import TheCard from '$lib/components/TheCard.svelte';
-  import { Input } from '$lib/components/ui/input';
-  import { Button } from '$lib/components/ui/button';
   import * as Alert from '$lib/components/ui/alert';
+  import { Button } from '$lib/components/ui/button';
+  import * as Form from '$lib/components/ui/form';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
 
   export let data: PageData;
-  export let form: ActionData;
+  let loading = false;
+  const form = superForm(data.form, {
+    validators: valibotClient(schema),
+    resetForm: false,
+    onSubmit: () => {
+      loading = true;
+    },
+    onResult: () => {
+      loading = false;
+    }
+  });
+  const { form: formData, enhance, errors, message } = form;
 
-  // const { form, errors, constraints, enhance } = superForm(data.form, {
-  //   onResult: ({ result }) => {
-  //     console.log('result in inactive', result);
-  //     if (result.type === 'success') {
-  //       console.log('success');
-  //     } else if (result.type === 'failure') {
-  //       if (result.data?.error) {
-  //         message = result.data.error;
-  //       }
-  //     }
-  //   }
-  // });
+  afterNavigate(() => {
+    const to_focus: HTMLElement | null = document.querySelector('.focus-me');
+    to_focus?.focus();
+  });
 </script>
 
 <TheCard title="Account Not Active">
@@ -30,20 +39,41 @@
     Your account is not yet active. Please click the link in the email that was previously sent to
     you. If you need a new activation link please fill out the form below.
   </span>
-  <form method="post" class="space-y-3" use:enhance>
-    {#if form?.error}
-      <Alert.Root slot="alert" variant="destructive" class="w-full">
-        <Alert.Title>Error</Alert.Title>
-        <Alert.Description>{form.error}</Alert.Description>
-      </Alert.Root>
-    {/if}
-    <div>
-      <label for="email">Email</label>
-      <Input type="email" name="email" id="email" value={form?.email ?? data.email} />
-      {#if form?.errors?.email}
-        <small class="text-primary italic">{form?.errors?.email}</small>
+  {#if $message}
+    <Alert.Root
+      class={$message.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}
+    >
+      {#if $message.title}
+        <Alert.Title>
+          {$message.title}
+        </Alert.Title>
       {/if}
-    </div>
-    <Button type="submit" class="block w-full">Submit</Button>
+      <Alert.Description>
+        {$message.text}
+      </Alert.Description>
+    </Alert.Root>
+  {/if}
+  <form use:enhance method="POST" class="space-y-2">
+    <Form.Field {form} name="email" class="space-y-0 pb-2">
+      <Form.Control let:attrs>
+        <Label>Email</Label>
+        <Input
+          {...attrs}
+          variant={$errors.email ? 'error' : 'default'}
+          required={!!attrs['aria-required'] || undefined}
+          type="email"
+          class="focus-me"
+          bind:value={$formData.email}
+        />
+      </Form.Control>
+      <Form.FieldErrors let:errors let:errorAttrs>
+        {#if errors.length}
+          <div class="my-1 rounded-md bg-red-100 px-2 py-1 italic text-red-800" {...errorAttrs}>
+            {errors[0]}
+          </div>
+        {/if}
+      </Form.FieldErrors>
+    </Form.Field>
+    <Button {loading} class="w-full" type="submit">Submit</Button>
   </form>
 </TheCard>

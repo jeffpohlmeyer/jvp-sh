@@ -1,10 +1,8 @@
 {
-  "version": "5",
-  "dialect": "pg",
-  "id": "7f4d1d5a-92cd-444e-9c17-579800784cfe",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "session": {
+    "public.session": {
       "name": "session",
       "schema": "",
       "columns": {
@@ -33,21 +31,21 @@
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "tokens": {
+    "public.tokens": {
       "name": "tokens",
       "schema": "",
       "columns": {
@@ -82,21 +80,21 @@
         "tokens_user_id_user_id_fk": {
           "name": "tokens_user_id_user_id_fk",
           "tableFrom": "tokens",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "urls": {
+    "public.urls": {
       "name": "urls",
       "schema": "",
       "columns": {
@@ -151,21 +149,21 @@
         "urls_user_id_user_id_fk": {
           "name": "urls_user_id_user_id_fk",
           "tableFrom": "urls",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "user": {
+    "public.user": {
       "name": "user",
       "schema": "",
       "columns": {
@@ -215,21 +213,22 @@
       "uniqueConstraints": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     }
   },
   "enums": {
-    "token_type": {
+    "public.token_type": {
       "name": "token_type",
-      "values": {
-        "activation": "activation",
-        "reset-password": "reset-password"
-      }
+      "schema": "public",
+      "values": [
+        "activation",
+        "reset-password"
+      ]
     }
   },
   "schemas": {},
@@ -237,5 +236,8 @@
     "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "7f4d1d5a-92cd-444e-9c17-579800784cfe",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "sequences": {}
 }

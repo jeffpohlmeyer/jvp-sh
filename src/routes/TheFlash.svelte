@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
-  import { page } from '$app/stores';
   import { getFlash } from 'sveltekit-flash-message';
   import Icon from '@iconify/svelte';
+
+  import { browser } from '$app/environment';
+  import { page } from '$app/stores';
 
   const flash = getFlash(page);
 
@@ -133,7 +134,7 @@
 
 {#if $flash}
   <div
-    class="mx-auto rounded-md p-4 absolute bottom-0 z-20 inset-x-0 w-[98vw] border sm:w-[95vw] md:w-3/4 max-w-2xl {get_bg_class()} {get_border_class()}"
+    class="absolute inset-x-0 bottom-0 z-20 mx-auto w-[98vw] max-w-2xl rounded-md border p-4 sm:w-[95vw] md:w-3/4 {get_bg_class()} {get_border_class()}"
   >
     <div class="flex">
       <div class="flex-shrink-0">

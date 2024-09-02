@@ -6,10 +6,10 @@
   <span slot="title">Admin Section</span>
   <ul class="space-y-3">
     <li>
-      <a href="/admin/users">Users</a>
+      <a href="/admin/users" data-sveltekit-preload-data="tap">Users</a>
     </li>
     <li>
-      <a href="/admin/urls">URLs</a>
+      <a href="/admin/urls" data-sveltekit-preload-data="tap">URLs</a>
     </li>
   </ul>
 </TheCard>

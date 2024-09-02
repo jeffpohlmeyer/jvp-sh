@@ -1,6 +1,6 @@
-import type { Actions, PageServerLoad } from './$types';
+import { check_user_auth_actions, check_user_auth_load } from '../utils';
 
-import { check_user_auth_load, check_user_auth_actions } from '../utils';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
   return { url: await check_user_auth_load(event) };

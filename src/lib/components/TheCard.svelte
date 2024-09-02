@@ -9,7 +9,7 @@
 
 <MetaTags pageTitle={title} siteUrl={$page.url.href} {metadescription} />
 
-<Card.Root class="sm:max-w-2xl sm:mx-auto sm:w-full {$$props.class}">
+<Card.Root class="sm:mx-auto sm:w-full sm:max-w-2xl {$$props.class}">
   <Card.Header>
     <Card.Title>
       <slot name="title" />

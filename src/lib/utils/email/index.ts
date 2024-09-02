@@ -1,7 +1,7 @@
-import { dev } from '$app/environment';
 import nodemailer, { type TransportOptions } from 'nodemailer';
 import mg from 'nodemailer-mailgun-transport';
 
+import { dev } from '$app/environment';
 import {
   EMAIL_HOST,
   EMAIL_PORT,
@@ -19,12 +19,15 @@ export type EmailHtmlType = {
 export type EmailDataType = {
   to: string;
   subject: string;
-  text: string;
+  text?: string;
+  user?: string;
+  from?: string;
   html: EmailHtmlType;
+  replyTo?: string;
 };
 
 export async function send_mail(payload: EmailDataType) {
-  const { to, subject, text, html: _html } = payload;
+  const { to, subject, text, html: _html, replyTo } = payload;
   const from = `jvp.sh <${NOREPLY_EMAIL}>`;
   const { title, style, body } = _html;
   const html = `<!doctype html>
@@ -64,5 +67,15 @@ export async function send_mail(payload: EmailDataType) {
   }
 
   const transporter = nodemailer.createTransport(transportArgument);
-  await transporter.sendMail({ from, to, subject, text, html });
+  if (dev) {
+    try {
+      await transporter.sendMail({ from, to, subject, text, html, replyTo });
+    } catch (err) {
+      console.log('err', err);
+      console.log('Sending mail failed. Here is the text content of the message.');
+      console.log(text ?? html);
+    }
+  } else {
+    await transporter.sendMail({ from, to, subject, text, html, replyTo });
+  }
 }

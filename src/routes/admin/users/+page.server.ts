@@ -1,9 +1,8 @@
 import type { PageServerLoad } from './$types';
 
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/schema';
-
 import { check_admin_user } from '$lib/middleware/admin';
+import { db } from '$lib/server/db';
+import { userTable } from '$lib/server/schema';
 
 export const load: PageServerLoad = async (event) => {
   check_admin_user(event);
@@ -11,12 +10,12 @@ export const load: PageServerLoad = async (event) => {
   return {
     users: await db
       .select({
-        id: user.id,
-        email: user.email,
-        created_at: user.created_at,
-        active: user.active,
-        is_admin: user.is_admin
+        id: userTable.id,
+        email: userTable.email,
+        created_at: userTable.created_at,
+        active: userTable.active,
+        is_admin: userTable.is_admin
       })
-      .from(user)
+      .from(userTable)
   };
 };

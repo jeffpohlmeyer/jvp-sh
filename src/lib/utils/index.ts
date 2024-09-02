@@ -1,8 +1,9 @@
-import crypto from 'crypto';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { cubicOut } from 'svelte/easing';
 import type { TransitionConfig } from 'svelte/transition';
+import { type ClassValue, clsx } from 'clsx';
+import crypto from 'crypto';
+import { twMerge } from 'tailwind-merge';
+import * as v from 'valibot';
 
 export function generateRandomString(length: number) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -71,3 +72,11 @@ export const flyAndScale = (
     easing: cubicOut
   };
 };
+
+export const url_schema = v.object({
+  redirect_link: v.pipe(
+    v.string('The URL must be a string.'),
+    v.nonEmpty('Please enter a URL.'),
+    v.url('The URL is badly formatted.')
+  )
+});

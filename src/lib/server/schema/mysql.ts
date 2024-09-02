@@ -1,13 +1,13 @@
-import {
-  mysqlTable,
-  boolean,
-  bigint,
-  serial,
-  int,
-  varchar,
-  timestamp
-} from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
+import {
+  bigint,
+  boolean,
+  int,
+  mysqlTable,
+  serial,
+  timestamp,
+  varchar
+} from 'drizzle-orm/mysql-core';
 
 export const user = mysqlTable('user', {
   id: varchar('id', {
@@ -47,6 +47,6 @@ export const urls = mysqlTable('urls', {
 export const user_session_relations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.user_id],
-    references: [user.id]
+    references: [userTable.id]
   })
 }));

@@ -1,71 +1,62 @@
-import type { Actions, PageServerLoad } from './$types';
-
 import { redirect } from 'sveltekit-flash-message/server';
 import { eq } from 'drizzle-orm';
 
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/schema';
+import type { Actions, PageServerLoad } from './$types';
 
 import { check_admin_user } from '$lib/middleware/admin';
-import { must_be_logged_in } from '$lib/middleware/auth';
+import { db } from '$lib/server/db';
+import { userTable } from '$lib/server/schema';
 
 export const load: PageServerLoad = async (event) => {
-  must_be_logged_in(event);
   check_admin_user(event);
   const { locals, params } = event;
   const { id } = params;
   if (id === locals?.user?.id) {
-    throw redirect(
+    return redirect(
       302,
       '/admin/users',
       { type: 'error', message: 'You cannot change your own status here.' },
       event
     );
   }
-  const user_result = await db.select().from(user).where(eq(user.id, id));
-  if (!user_result.length) {
-    throw redirect(
+  const user = (await db.select().from(userTable).where(eq(userTable.id, id)).limit(1))[0];
+  if (!user) {
+    return redirect(
       302,
       '/admin/users',
       { type: 'error', message: 'That user was not found' },
       event
     );
   }
-  return { user: user_result[0] };
+  return { user };
 };
 
 export const actions: Actions = {
   default: async (event) => {
-    must_be_logged_in(event);
     check_admin_user(event);
     const { locals, params, request } = event;
     const { id } = params;
     if (id === locals?.user?.id) {
-      throw redirect(
+      redirect(
         302,
         '/admin/users',
         { type: 'error', message: 'You cannot change your own status here.' },
         event
       );
     }
-    const user_result = await db.select().from(user).where(eq(user.id, id));
-    if (!user_result.length) {
-      throw redirect(
-        302,
-        '/admin/users',
-        { type: 'error', message: 'That user was not found' },
-        event
-      );
+    const user = (await db.select().from(userTable).where(eq(userTable.id, id)).limit(1))[0];
+    if (!user) {
+      redirect(302, '/admin/users', { type: 'error', message: 'That user was not found' }, event);
     }
     const formData = Object.fromEntries(await request.formData());
     const active: boolean = !!formData.active ?? false;
-    await db.update(user).set({ active }).where(eq(user.id, id));
-    throw redirect(
+    await db.update(userTable).set({ active }).where(eq(userTable.id, id));
+    redirect(
       302,
       '/admin/users',
       {
         type: 'success',
-        message: `You have successfully updated user ${user_result[0].email}.`
+        message: `You have successfully updated user ${user.email}.`
       },
       event
     );

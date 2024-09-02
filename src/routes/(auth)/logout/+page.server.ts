@@ -1,18 +1,34 @@
-import type { PageServerLoad, Actions } from './$types';
-
 import { redirect } from 'sveltekit-flash-message/server';
 
-import { logout_user } from '$lib/utils/auth';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-  if (!locals?.user?.id) {
-    throw redirect(302, '/');
-  }
+import { must_be_logged_in } from '$lib/middleware/auth';
+import { lucia } from '$lib/server/auth';
+
+export const load: PageServerLoad = async (event) => {
+  must_be_logged_in(event);
+
   return {};
 };
 
 export const actions: Actions = {
   default: async (event) => {
-    return await logout_user(event);
+    must_be_logged_in(event);
+    await lucia.invalidateSession(event.locals.session?.id as string);
+    const blankCookie = lucia.createBlankSessionCookie();
+    event.cookies.set(blankCookie.name, blankCookie.value, {
+      path: '.',
+      ...blankCookie.attributes
+    });
+    return redirect(
+      302,
+      '/',
+      {
+        title: 'Logout Success',
+        message: 'You have successfully logged out',
+        type: 'success'
+      },
+      event
+    );
   }
 };

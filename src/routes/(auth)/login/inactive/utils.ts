@@ -1,8 +1,9 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
-export const schema = {
-  email: z
-    .string()
-    .min(1, 'Please provide an email address')
-    .email('Please provide a valid email address')
-};
+export const schema = v.object({
+  email: v.pipe(
+    v.string('Your email must be a string.'),
+    v.nonEmpty('Please enter your email.'),
+    v.email('The email address is badly formatted.')
+  )
+});

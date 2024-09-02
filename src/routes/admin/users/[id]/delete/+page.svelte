@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import TheCard from '$lib/components/TheCard.svelte';
 
+  import { enhance } from '$app/forms';
+  import TheCard from '$lib/components/TheCard.svelte';
   import { Button } from '$lib/components/ui/button';
 
   export let data: PageData;
@@ -13,7 +14,7 @@
     This user's shortened links will remain in the system but the account will be disassociated with
     them.
   </span>
-  <form method="post">
+  <form method="post" use:enhance>
     <p>
       Are you sure you want to delete this account? This cannot be undone and all data will be lost.
     </p>

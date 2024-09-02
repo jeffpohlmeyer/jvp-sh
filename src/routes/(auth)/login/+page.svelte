@@ -1,69 +1,123 @@
 <script lang="ts">
-  import type { PageData, ActionData } from './$types';
-  import { enhance } from '$app/forms';
+  import { valibotClient } from 'sveltekit-superforms/adapters';
+  import { superForm } from 'sveltekit-superforms/client';
+  import { Eye, EyeOff } from 'lucide-svelte';
 
-  import Icon from '@iconify/svelte';
+  import type { PageData } from './$types';
+  import { schema } from './utils';
 
+  import { afterNavigate } from '$app/navigation';
   import TheCard from '$lib/components/TheCard.svelte';
-  import { Label } from '$lib/components/ui/label';
-  import { Input } from '$lib/components/ui/input';
+  import * as Alert from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
+  import * as Form from '$lib/components/ui/form';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
 
   export let data: PageData;
-  export let form: ActionData;
+  let loading = false;
   let password_visible = false;
+  const form = superForm(data.form, {
+    validators: valibotClient(schema),
+    onSubmit: () => {
+      loading = true;
+    },
+    onResult: () => {
+      loading = false;
+    }
+  });
+  const { form: formData, enhance, errors, message } = form;
 
-  $: icon = password_visible ? 'heroicons:eye-solid' : 'heroicons:eye-slash-solid';
+  afterNavigate(() => {
+    const to_focus: HTMLElement | null = document.querySelector('.focus-me');
+    to_focus?.focus();
+  });
 </script>
 
 <TheCard title="Log In">
   <span slot="title">Log In</span>
   <span slot="sub-title">
     If you have not created an account yet, then please
-    <a href="/register" class="text-primary underline">sign up</a>
+    <a href="/register" class="text-primary underline" data-sveltekit-preload-data="tap">sign up</a>
     first.
   </span>
-  <form method="post" class="space-y-3" use:enhance>
-    <div>
-      <Label for="email">Email</Label>
-      <Input
-        type="email"
-        name="email"
-        id="email"
-        value={form?.email ?? data.email}
-        aria-invalid={form?.errors?.email ? 'true' : undefined}
-      />
-      {#if form?.errors?.email}
-        <small class="text-primary italic">{form.errors.email}</small>
+  {#if $message}
+    <Alert.Root
+      class={$message.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}
+    >
+      {#if $message.title}
+        <Alert.Title>
+          {$message.title}
+        </Alert.Title>
       {/if}
-    </div>
-    <div>
-      <Label for="password">Password</Label>
-      <div class="flex space-x-2">
+      <Alert.Description>
+        {$message.text}
+      </Alert.Description>
+    </Alert.Root>
+  {/if}
+  <form use:enhance method="POST" class="space-y-2">
+    <Form.Field {form} name="email" class="space-y-0 pb-2">
+      <Form.Control let:attrs>
+        <Label>Email</Label>
         <Input
-          type={password_visible ? 'text' : 'password'}
-          name="password"
-          id="password"
-          value={data.password}
-          class="grow"
-          aria-invalid={form?.errors?.password ? 'true' : undefined}
+          {...attrs}
+          variant={$errors.email ? 'error' : 'default'}
+          required={!!attrs['aria-required'] || undefined}
+          type="email"
+          class="focus-me"
+          bind:value={$formData.email}
         />
-        <Button
-          type="button"
-          size="icon"
-          class=""
-          on:click={() => (password_visible = !password_visible)}
-        >
-          <Icon {icon} />
-        </Button>
-      </div>
-      {#if form?.errors?.password}
-        <small class="text-primary italic">{form.errors.password}</small>
-      {/if}
-    </div>
-    <Button type="submit" class="block w-full">Log In</Button>
+      </Form.Control>
+      <Form.FieldErrors let:errors let:errorAttrs>
+        {#if errors.length}
+          <div class="my-1 rounded-md bg-red-100 px-2 py-1 italic text-red-800" {...errorAttrs}>
+            {errors[0]}
+          </div>
+        {/if}
+      </Form.FieldErrors>
+    </Form.Field>
+    <Form.Field {form} name="password" class="space-y-0 pb-2">
+      <Form.Control let:attrs>
+        <Label>Password</Label>
+        <div class="relative">
+          <Input
+            {...attrs}
+            variant={$errors.password ? 'error' : 'default'}
+            required={!!attrs['aria-required'] || undefined}
+            type={password_visible ? 'text' : 'password'}
+            bind:value={$formData.password}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            type="button"
+            class="absolute inset-y-0 right-0"
+            tabindex={-1}
+            on:click={() => (password_visible = !password_visible)}
+          >
+            {#if password_visible}
+              <Eye />
+            {:else}
+              <EyeOff />
+            {/if}
+          </Button>
+        </div>
+      </Form.Control>
+      <Form.FieldErrors let:errors let:errorAttrs>
+        {#if errors.length}
+          <div class="my-1 rounded-md bg-red-100 px-2 py-1 italic text-red-800" {...errorAttrs}>
+            {errors[0]}
+          </div>
+        {/if}
+      </Form.FieldErrors>
+    </Form.Field>
+    <Button {loading} class="w-full" type="submit">Log In</Button>
   </form>
-  <a href="/forgot-password" class="text-primary underline pt-8 pb-2 block text-center">
+  <a
+    href="/forgot-password"
+    class="block pb-2 pt-8 text-center text-primary underline"
+    data-sveltekit-preload-data="tap"
+  >
     Forgot Password
   </a>
 </TheCard>

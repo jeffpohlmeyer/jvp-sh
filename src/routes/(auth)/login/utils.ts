@@ -1,6 +1,14 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
-export const schema = {
-  email: z.string().email(),
-  password: z.string().min(8)
-};
+export const schema = v.object({
+  email: v.pipe(
+    v.string('Your email must be a string.'),
+    v.nonEmpty('Please enter your email.'),
+    v.email('The email address is badly formatted.')
+  ),
+  password: v.pipe(
+    v.string('Password must be a string.'),
+    v.nonEmpty('Password is required.'),
+    v.minLength(8, 'Password must be at least 8 characters.')
+  )
+});

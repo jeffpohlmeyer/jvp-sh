@@ -1,14 +1,39 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
-  import type { ActionData, PageData } from './$types';
+  import { valibotClient } from 'sveltekit-superforms/adapters';
+  import { superForm } from 'sveltekit-superforms/client';
+  import { Eye, EyeOff } from 'lucide-svelte';
+
+  import type { PageData } from './$types';
+  import { schema } from './utils';
+
+  import { afterNavigate } from '$app/navigation';
   import TheCard from '$lib/components/TheCard.svelte';
-  import { Label } from '$lib/components/ui/label';
-  import { Input } from '$lib/components/ui/input';
-  import { Button } from '$lib/components/ui/button';
   import * as Alert from '$lib/components/ui/alert';
+  import { Button } from '$lib/components/ui/button';
+  import * as Form from '$lib/components/ui/form';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
 
   export let data: PageData;
-  export let form: ActionData;
+  let loading = false;
+  let current_password_visible = false;
+  let new_password_visible = false;
+  let confirm_password_visible = false;
+  const form = superForm(data.form, {
+    validators: valibotClient(schema),
+    onSubmit: () => {
+      loading = true;
+    },
+    onResult: () => {
+      loading = false;
+    }
+  });
+  const { form: formData, enhance, errors, message } = form;
+
+  afterNavigate(() => {
+    const to_focus: HTMLElement | null = document.querySelector('.focus-me');
+    to_focus?.focus();
+  });
 </script>
 
 <TheCard title="Change Password">
@@ -16,52 +41,127 @@
   <span slot="sub-title">
     Please enter your current password as well as your choice for your new password.
   </span>
-  <form method="post" class="space-y-3" use:enhance>
-    {#if form?.message}
-      <Alert.Root slot="alert" variant="destructive" class="w-full">
-        <Alert.Title>Error</Alert.Title>
-        <Alert.Description>{form.message}</Alert.Description>
-      </Alert.Root>
-    {/if}
-    <div>
-      <Label for="current_password">Current Password</Label>
-      <Input
-        type="password"
-        name="current_password"
-        id="current_password"
-        value={form?.current_password ?? data.current_password}
-        aria-invalid={form?.errors?.current_password ? 'true' : undefined}
-      />
-      {#if form?.errors?.current_password}
-        <small class="text-primary italic">{form.errors.current_password}</small>
+  {#if $message}
+    <Alert.Root
+      class={$message.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}
+    >
+      {#if $message.title}
+        <Alert.Title>
+          {$message.title}
+        </Alert.Title>
       {/if}
-    </div>
-    <div>
-      <Label for="password">New Password</Label>
-      <Input
-        type="password"
-        name="password"
-        id="password"
-        value={form?.password ?? data.password}
-        aria-invalid={form?.errors?.password ? 'true' : undefined}
-      />
-      {#if form?.errors?.password}
-        <small class="text-primary italic">{form.errors.password}</small>
-      {/if}
-    </div>
-    <div>
-      <Label for="confirm_password">Confirm Password</Label>
-      <Input
-        type="password"
-        name="confirm_password"
-        id="confirm_password"
-        value={form?.confirm_password ?? data.confirm_password}
-        aria-invalid={form?.errors?.confirm_password ? 'true' : undefined}
-      />
-      {#if form?.errors?.confirm_password}
-        <small class="text-primary italic">{form.errors.confirm_password}</small>
-      {/if}
-    </div>
-    <Button type="submit" class="block w-full">Submit</Button>
+      <Alert.Description>
+        {$message.text}
+      </Alert.Description>
+    </Alert.Root>
+  {/if}
+  <form use:enhance method="POST" class="space-y-2">
+    <Form.Field {form} name="current_password" class="space-y-0 pb-2">
+      <Form.Control let:attrs>
+        <Label>Current Password</Label>
+        <div class="relative">
+          <Input
+            {...attrs}
+            variant={$errors.current_password ? 'error' : 'default'}
+            required={!!attrs['aria-required'] || undefined}
+            type={current_password_visible ? 'text' : 'password'}
+            class="focus-me"
+            bind:value={$formData.current_password}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            type="button"
+            class="absolute inset-y-0 right-0"
+            tabindex={-1}
+            on:click={() => (current_password_visible = !current_password_visible)}
+          >
+            {#if current_password_visible}
+              <Eye />
+            {:else}
+              <EyeOff />
+            {/if}
+          </Button>
+        </div>
+      </Form.Control>
+      <Form.FieldErrors let:errors let:errorAttrs>
+        {#if errors.length}
+          <div class="my-1 rounded-md bg-red-100 px-2 py-1 italic text-red-800" {...errorAttrs}>
+            {errors[0]}
+          </div>
+        {/if}
+      </Form.FieldErrors>
+    </Form.Field>
+    <Form.Field {form} name="new_password" class="space-y-0 pb-2">
+      <Form.Control let:attrs>
+        <Label>New Password</Label>
+        <div class="relative">
+          <Input
+            {...attrs}
+            variant={$errors.new_password ? 'error' : 'default'}
+            required={!!attrs['aria-required'] || undefined}
+            type={new_password_visible ? 'text' : 'password'}
+            bind:value={$formData.new_password}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            type="button"
+            class="absolute inset-y-0 right-0"
+            tabindex={-1}
+            on:click={() => (new_password_visible = !new_password_visible)}
+          >
+            {#if new_password_visible}
+              <Eye />
+            {:else}
+              <EyeOff />
+            {/if}
+          </Button>
+        </div>
+      </Form.Control>
+      <Form.FieldErrors let:errors let:errorAttrs>
+        {#if errors.length}
+          <div class="my-1 rounded-md bg-red-100 px-2 py-1 italic text-red-800" {...errorAttrs}>
+            {errors[0]}
+          </div>
+        {/if}
+      </Form.FieldErrors>
+    </Form.Field>
+    <Form.Field {form} name="confirm_password" class="space-y-0 pb-2">
+      <Form.Control let:attrs>
+        <Label>Confirm New Password</Label>
+        <div class="relative">
+          <Input
+            {...attrs}
+            variant={$errors.confirm_password ? 'error' : 'default'}
+            required={!!attrs['aria-required'] || undefined}
+            type={confirm_password_visible ? 'text' : 'password'}
+            bind:value={$formData.confirm_password}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            type="button"
+            class="absolute inset-y-0 right-0"
+            tabindex={-1}
+            on:click={() => (confirm_password_visible = !confirm_password_visible)}
+          >
+            {#if confirm_password_visible}
+              <Eye />
+            {:else}
+              <EyeOff />
+            {/if}
+          </Button>
+        </div>
+      </Form.Control>
+      <Form.FieldErrors let:errors let:errorAttrs>
+        {#if errors.length}
+          <div class="my-1 rounded-md bg-red-100 px-2 py-1 italic text-red-800" {...errorAttrs}>
+            {errors[0]}
+          </div>
+        {/if}
+      </Form.FieldErrors>
+    </Form.Field>
+    <Button {loading} class="w-full" type="submit">Submit</Button>
   </form>
 </TheCard>
