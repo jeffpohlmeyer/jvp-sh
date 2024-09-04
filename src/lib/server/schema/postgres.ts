@@ -114,17 +114,3 @@ export const urlsTable = pgTable('urls', {
 
 export type URLsType = InferSelectModel<typeof urlsTable>;
 export type UrlWithEmailType = URLsType & { email?: string };
-
-export const token_type_enum = pgEnum('token_type', ['activation', 'reset-password']);
-export const tokenTable = pgTable('tokens', {
-  id: varchar('id')
-    .$defaultFn(() => new_id('token', 16))
-    .primaryKey(),
-  token_type: token_type_enum('token_type'),
-  expires: timestamp('expires')
-    .notNull()
-    .default(sql`now() + '60 minutes'`),
-  user_id: varchar('user_id')
-    .notNull()
-    .references(() => userTable.id)
-});
