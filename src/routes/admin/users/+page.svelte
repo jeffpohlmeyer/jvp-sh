@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import UsersTable from './users-table.svelte';
 
   import { Button } from '$lib/components/ui/button';
-  import UsersTable from './users-table.svelte';
 
   export let data: PageData;
 </script>

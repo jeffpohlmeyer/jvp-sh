@@ -1,13 +1,13 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import { page } from '$app/stores';
-
   import { getFlash } from 'sveltekit-flash-message';
   import Icon from '@iconify/svelte';
 
-  import { Button } from '$lib/components/ui/button';
+  import type { PageData } from './$types';
+
+  import { page } from '$app/stores';
   import MetaTags from '$lib/components/MetaTags.svelte';
   import TheCard from '$lib/components/TheCard.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   export let data: PageData;
   let iframe = false;
@@ -29,14 +29,14 @@
 
 <TheCard title="URL {data.endpoint}" class="mb-4">
   <span slot="title">Shortened URL</span>
-  <span slot="sub-title" class="space-x-3 flex items-center">
+  <span slot="sub-title" class="flex items-center space-x-3">
     <span>{url}</span>
     <Button variant="outline" size="xs" on:click={copy_url}>
-      <Icon icon="lucide:copy" class="w-4 h-4" />
+      <Icon icon="lucide:copy" class="h-4 w-4" />
     </Button>
   </span>
 
-  <ul class="text-sm md:text-base lg:text-lg xl:text-xl pb-3">
+  <ul class="pb-3 text-sm md:text-base lg:text-lg xl:text-xl">
     <li>
       Redirects to <a
         href={data.redirect_link}
@@ -54,7 +54,7 @@
       Version {data.version} has been clicked {data.clicked} times
     </li>
   </ul>
-  <Button on:click={() => (iframe = !iframe)} class="w-full block">
+  <Button on:click={() => (iframe = !iframe)} class="block w-full">
     {iframe ? 'Hide' : 'Show'} Preview
   </Button>
 </TheCard>
@@ -63,6 +63,6 @@
   <iframe
     src={data.redirect_link}
     title={data.redirect_link}
-    class="w-full h-[65%] rounded-md shadow-lg z-20 bg-background"
+    class="z-20 h-[65%] w-full rounded-md bg-background shadow-lg"
   ></iframe>
 {/if}

@@ -1,39 +1,30 @@
-import type { Actions, PageServerLoad } from './$types';
-
 import { redirect } from 'sveltekit-flash-message/server';
 import { eq } from 'drizzle-orm';
 
-import { db } from '$lib/server/db';
-import { session, urls, user } from '$lib/server/schema';
+import type { Actions, PageServerLoad } from './$types';
 
 import { check_admin_user } from '$lib/middleware/admin';
-import { must_be_logged_in } from '$lib/middleware/auth';
+import { db } from '$lib/server/db';
+import { sessionTable, urlsTable, userTable } from '$lib/server/schema';
 
 export const load: PageServerLoad = async (event) => {
-  must_be_logged_in(event);
   check_admin_user(event);
   const { locals, params } = event;
   const { id } = params;
   if (id === locals?.user?.id) {
-    throw redirect(
+    redirect(
       302,
       '/admin/users',
       { type: 'error', message: 'You cannot delete your own account from here.' },
       event
     );
   }
-  const user_result = await db.select().from(user).where(eq(user.id, id));
-  if (!user_result.length) {
-    throw redirect(
-      302,
-      '/admin/users',
-      { type: 'error', message: 'That user was not found' },
-      event
-    );
+  const user = (await db.select().from(userTable).where(eq(userTable.id, id)).limit(1))[0];
+  if (!user) {
+    redirect(302, '/admin/users', { type: 'error', message: 'That user was not found' }, event);
   }
-  const _user = user_result[0];
-  if (_user.is_admin) {
-    throw redirect(
+  if (user.is_admin) {
+    redirect(
       302,
       '/admin/users',
       {
@@ -43,35 +34,28 @@ export const load: PageServerLoad = async (event) => {
       event
     );
   }
-  return { user: _user };
+  return { user };
 };
 
 export const actions: Actions = {
   default: async (event) => {
-    must_be_logged_in(event);
     check_admin_user(event);
     const { locals, params } = event;
     const { id } = params;
     if (id === locals?.user?.id) {
-      throw redirect(
+      redirect(
         302,
         '/admin/users',
         { type: 'error', message: 'You cannot delete your own account from here.' },
         event
       );
     }
-    const user_result = await db.select().from(user).where(eq(user.id, id));
-    if (!user_result.length) {
-      throw redirect(
-        302,
-        '/admin/users',
-        { type: 'error', message: 'That user was not found' },
-        event
-      );
+    const user = (await db.select().from(userTable).where(eq(userTable.id, id)).limit(1))[0];
+    if (!user) {
+      redirect(302, '/admin/users', { type: 'error', message: 'That user was not found' }, event);
     }
-    const _user = user_result[0];
-    if (_user.is_admin) {
-      throw redirect(
+    if (user.is_admin) {
+      redirect(
         302,
         '/admin/users',
         {
@@ -82,16 +66,16 @@ export const actions: Actions = {
       );
     }
     await db.transaction(async (tx) => {
-      await tx.update(urls).set({ user_id: null }).where(eq(urls.user_id, id));
-      await tx.delete(session).where(eq(session.user_id, id));
-      await tx.delete(user).where(eq(user.id, id));
+      await tx.update(urlsTable).set({ user_id: null }).where(eq(urlsTable.user_id, id));
+      await tx.delete(sessionTable).where(eq(sessionTable.id, id));
+      await tx.delete(userTable).where(eq(userTable.id, id));
     });
-    throw redirect(
+    redirect(
       302,
       '/admin/users',
       {
         type: 'success',
-        message: `You have successfully deleted user ${_user.email}`
+        message: `You have successfully deleted user ${user.email}`
       },
       event
     );

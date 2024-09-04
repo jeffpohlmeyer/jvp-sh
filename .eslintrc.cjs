@@ -1,3 +1,4 @@
+/** @type { import("eslint").Linter.Config } */
 module.exports = {
 	root: true,
 	extends: [
@@ -7,7 +8,7 @@ module.exports = {
 		'prettier'
 	],
 	parser: '@typescript-eslint/parser',
-	plugins: ['@typescript-eslint'],
+	plugins: ['prettier', '@typescript-eslint', 'simple-import-sort'],
 	parserOptions: {
 		sourceType: 'module',
 		ecmaVersion: 2020,
@@ -26,5 +27,34 @@ module.exports = {
 				parser: '@typescript-eslint/parser'
 			}
 		}
-	]
+	],
+	rules: {
+		'prettier/prettier': ['error'],
+		"@typescript-eslint/no-unused-vars": [
+			"warn",
+			{
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^\$\$(Props|Events|Slots|Generic)$"
+			}
+		],
+		'simple-import-sort/imports': [
+			'error',
+			{
+				groups: [
+					// 'svelte' related packages
+					['^svelte', '^@?\\w', 'vitest'],
+					// Side effect imports
+					['^\\u0000'],
+					// Internal packages
+					['^($lib)'],
+					// Parent imports
+					['^\\.\\.(?!/?$)', '^\\.\\./?$'],
+					// Other relative imports
+					['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'],
+					// Style imports
+					['^.+\\.?(css)$']
+				]
+			}
+		]
+	}
 };

@@ -1,85 +1,48 @@
-import { fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
-
-import { eq } from 'drizzle-orm';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
+import { superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
+import { fail } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/schema';
-import { must_be_logged_in } from '$lib/middleware/auth';
-import { check_admin_user } from '$lib/middleware/admin';
-import { type UseZodPayloadType, validate } from '$lib/utils/form';
-
+import type { Actions, PageServerLoad } from './$types';
 import { schema } from './utils';
 
+import { check_admin_user } from '$lib/middleware/admin';
+import { db } from '$lib/server/db';
+import { lower, userTable } from '$lib/server/schema';
+
 export const load: PageServerLoad = async (event) => {
-  must_be_logged_in(event);
   check_admin_user(event);
-  return {
-    email: '',
-    active: false,
-    is_admin: false
-  };
+  return { form: await superValidate(valibot(schema)) };
 };
 
 export const actions: Actions = {
   default: async (event) => {
-    must_be_logged_in(event);
     check_admin_user(event);
-    const { request } = event;
-    const formData = Object.fromEntries(await request.formData());
-    const email = formData.email?.toString()?.trim().toLowerCase();
-    const is_admin = !!formData.is_admin ?? false;
-    const active = !!formData.active ?? false;
-    const { valid, errors } = validate<{
-      email: string;
-      active: boolean;
-      is_admin: boolean;
-    }>({
-      schema_object: schema,
-      state_object: formData
-    } as UseZodPayloadType);
-    if (!valid) {
-      return fail(400, { errors, email, is_admin, active });
+    const form = await superValidate(event.request, valibot(schema));
+    if (!form.valid) {
+      return fail(400, { form });
     }
 
-    const result = await db.select().from(user).where(eq(user.email, email));
+    const result = await db
+      .select()
+      .from(userTable)
+      .where(eq(lower(userTable.email), form.data.email.toLowerCase()));
     if (result.length > 0) {
       setFlash({ type: 'error', message: 'An account with that email already exists' }, event);
-      return fail(400, {
-        email,
-        is_admin,
-        active,
-        error: 'duplicate-account'
-      });
+      return fail(400, { form });
     }
 
-    try {
-      const payload: { email: string; is_admin: boolean; active: boolean } = {
-        email,
-        is_admin,
-        active
-      };
-      await db.insert(user).values(payload);
-    } catch (err) {
-      console.log('err', err);
-      if (err.code === '23505') {
-        setFlash({ type: 'error', message: 'An account with that email already exists' }, event);
-        return fail(400, {
-          email,
-          is_admin,
-          active,
-          error: 'duplicate-account'
-        });
-      } else {
-        setFlash({ type: 'error', message: 'An unknown error occurred.' }, event);
-        return fail(500, { email, is_admin, active, error: 'unknown' });
-      }
-    }
-    throw redirect(
+    await db.insert(userTable).values({
+      email: form.data.email,
+      is_admin: form.data.is_admin,
+      active: form.data.active,
+      password_reset_required: true
+    });
+    redirect(
       302,
       '/admin/users',
-      { type: 'success', message: `User ${email} successfully created` },
+      { type: 'success', message: `User ${form.data.email} successfully created` },
       event
     );
   }

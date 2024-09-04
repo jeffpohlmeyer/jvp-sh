@@ -7,7 +7,8 @@ declare global {
       message: string;
     }
     interface Locals {
-      user: import('./hooks.server').UserReturnType;
+      user: import('$lib/server/db/schema/postgres').UserType | null;
+      session: import('$lib/server/db/schema/postgres').SessionType | null;
     }
     interface PageData {
       flash?: {
@@ -17,9 +18,12 @@ declare global {
         clearable?: boolean;
         timeout?: number;
       };
-      urls?: import('$lib/server/schema/types').URLsType[];
+      urls?: import('$lib/server/schema/postgres').URLsType[];
     }
     // interface Platform {}
+  }
+  namespace Superforms {
+    import('./lib/types/super-forms').Message;
   }
 }
 

@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { page } from '$app/stores';
   import { readable } from 'svelte/store';
   import { createRender, createTable, Render, Subscribe } from 'svelte-headless-table';
   import { addSortBy } from 'svelte-headless-table/plugins';
   import Icon from '@iconify/svelte';
 
-  import { Button } from '$lib/components/ui/button';
-  import * as Table from '$lib/components/ui/table';
   import UrlLinkCell from './url-link-cell.svelte';
   import UrlTableActions from './url-table-actions.svelte';
 
-  import type { URLsType } from '$lib/server/schema/types';
+  import { page } from '$app/stores';
+  import { Button } from '$lib/components/ui/button';
+  import * as Table from '$lib/components/ui/table';
+  import type { URLsType } from '$lib/server/schema/postgres';
 
   export let data: URLsType[] = [];
   export let access_type: 'admin' | 'regular';
@@ -79,7 +79,7 @@
                   {#if !props.sort.disabled}
                     <Button
                       variant="ghost"
-                      class="hover:bg-primary hover:text-background"
+                      class="flex flex space-x-2 space-x-2 hover:bg-primary hover:text-background"
                       on:click={props.sort.toggle}
                     >
                       <Render of={cell.render()} />

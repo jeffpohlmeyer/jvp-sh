@@ -1,112 +1,63 @@
-import type { Actions, PageServerLoad } from './$types';
-import { fail } from '@sveltejs/kit';
-
-import { eq } from 'drizzle-orm';
 import { redirect } from 'sveltekit-flash-message/server';
+import { message, superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
+import { fail } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 
-import { db } from '$lib/server/db';
-import { token, user } from '$lib/server/schema';
-import { type EmailDataType, send_mail } from '$lib/utils/email';
-import { validate } from '$lib/utils/form';
-
+import type { Actions, PageServerLoad } from './$types';
 import { schema } from './util';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
-  if (locals?.user?.id) {
-    throw redirect(302, '/');
-  }
+import { cannot_be_logged_in } from '$lib/middleware/auth';
+import { db } from '$lib/server/db';
+import { lower, userTable } from '$lib/server/schema';
+import { send_activate_account_email, send_reset_password_email } from '$lib/utils/email/actions';
+import { create_user_token } from '$lib/utils/user';
 
-  return {
-    email: '',
-    token_type: (url.searchParams.get('token-type') ?? 'activation') as
-      | 'activation'
-      | 'reset-password'
-  };
+export const load: PageServerLoad = async (event) => {
+  cannot_be_logged_in(event);
+
+  return { form: await superValidate(valibot(schema)) };
 };
 
 export const actions: Actions = {
-  default: async ({ request, url }) => {
-    const formData = Object.fromEntries(await request.formData());
-    const email = formData.email?.toString()?.trim().toLowerCase();
-    const form_data: { email: string; token_type: string } = {
-      email,
-      token_type: formData.token_type?.toString()?.trim().toLowerCase()
-    };
-    const { valid, errors } = validate<{ email: string; token_type: string }>({
-      schema_object: schema,
-      state_object: form_data
-    });
-    if (!valid) {
-      return fail(400, { errors, email });
+  default: async (event) => {
+    cannot_be_logged_in(event);
+
+    const form = await superValidate(event.request, valibot(schema));
+    if (!form.valid) {
+      return fail(400, { form });
     }
-    const token_type: 'activation' | 'reset-password' = form_data.token_type.toString() as
-      | 'activation'
+    const token_type: 'confirm' | 'reset-password' = event.url.searchParams.get('token-type') as
+      | 'confirm'
       | 'reset-password';
-    const user_result = await db
-      .select({ user_id: user.id })
-      .from(user)
-      .where(eq(user.email, email));
-    if (!user_result.length) {
-      return fail(404, {
-        ...form_data,
-        error: 'user-not-found',
-        message: 'That email address is not associated with any account.'
+    if (!['confirm', 'reset-password'].includes(token_type)) {
+      return message(form, {
+        type: 'error',
+        title: 'Error',
+        text: 'That is an invalid token request type.'
       });
     }
-    const _user = user_result[0];
-    const token_result = await db
-      .insert(token)
-      .values({ user_id: _user.user_id, token_type })
-      .returning({ id: token.id });
-    if (!token_result.length) {
-      return fail(500, {
-        ...form_data,
-        error: 'token-not-created',
-        message: 'An error occurred while creating a token. Please try again.'
+    const user = (
+      await db
+        .select({ user_id: userTable.id })
+        .from(userTable)
+        .where(eq(lower(userTable.email), form.data.email))
+        .limit(1)
+    )[0];
+    if (!user) {
+      return message(form, {
+        type: 'error',
+        title: 'Error',
+        text: 'That email address is not associated with any account.'
       });
     }
-    const _token = token_result[0];
+    const token = await create_user_token(form.data.email.toLowerCase());
+    if (token_type === 'confirm') {
+      send_activate_account_email({ token, email: form.data.email.toLowerCase() });
+    } else if (token_type === 'reset-password') {
+      send_reset_password_email({ token, email: form.data.email.toLowerCase() });
+    }
 
-    const link = `${url.origin}/token/${_token.id}/${token_type}`;
-    const to = email;
-    const email_data: { [key in 'activation' | 'reset-password']: EmailDataType } = {
-      activation: {
-        to,
-        subject: 'Activate your account',
-        text: `Click the link to activate your account: ${link}`,
-        html: {
-          title: 'Activate your account',
-          body: `
-          <h1>New Account</h1>
-          <p>A new account has been created at <a href="${url.origin}">${url.origin}</a> using this email address.</p>
-          <p>Please follow <a href="${link}">this link</a> to complete the registration process.</p>
-          <p>If the link does not work please copy and paste this link into the browser: ${link}</p>
-          <p>Thanks,</p>
-          <p>The team at jvp.sh</p>
-        `
-        }
-      },
-      'reset-password': {
-        to,
-        subject: 'Reset your password',
-        text: `Click the link to reset your password: ${link}`,
-        html: {
-          title: 'Reset your password',
-          body: `
-          <h1>Reset Password</h1>
-          <p>A request has been made to reset the password for your account at <a href="${url.origin}">${url.origin}</a> using this email address.</p>
-          <p>Please follow <a href="${link}">this link</a> to reset your password.</p>
-          <p>If the link does not work please copy and paste this link into the browser: ${link}</p>
-          <p>Thanks,</p>
-          <p>The team at jvp.sh</p>
-        `
-        }
-      }
-    };
-    await send_mail(email_data[token_type]);
-
-    const _redirect =
-      token_type === 'activation' ? '/register/confirm' : '/forgot-password/confirm';
-    throw redirect(302, _redirect);
+    redirect(302, '/token/new/confirm');
   }
 };

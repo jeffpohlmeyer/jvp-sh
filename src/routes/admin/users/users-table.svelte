@@ -1,17 +1,16 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import { page } from '$app/stores';
+  import { readable } from 'svelte/store';
   import { createRender, createTable, Render, Subscribe } from 'svelte-headless-table';
   import { addSortBy } from 'svelte-headless-table/plugins';
-  import Icon from '@iconify/svelte';
+  import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-svelte';
+
+  import type { PageData } from './$types';
+  import UserTableActions from './user-actions.svelte';
 
   import { Button } from '$lib/components/ui/button';
   import * as Table from '$lib/components/ui/table';
-  import { readable } from 'svelte/store';
-  import type { UserType } from '$lib/server/schema/types';
-  import UserTableActions from './user-actions.svelte';
 
-  export let data: UserType[] = [];
+  export let data: PageData['users'] = [];
 
   const table = createTable(readable(data), {
     sort: addSortBy({ initialSortKeys: [{ id: 'created_at', order: 'desc' }] })
@@ -60,16 +59,16 @@
                   {#if !props.sort.disabled}
                     <Button
                       variant="ghost"
-                      class="hover:bg-primary hover:text-background"
+                      class="flex space-x-2 hover:bg-primary hover:text-background"
                       on:click={props.sort.toggle}
                     >
                       <Render of={cell.render()} />
                       {#if props.sort.order === 'desc'}
-                        <Icon icon="lucide:chevron-down" class="ml-2 h-4 w-4" />
+                        <ChevronDown class="ml-2 h-4 w-4" />
                       {:else if props.sort.order === 'asc'}
-                        <Icon icon="lucide:chevron-up" class="ml-2 h-4 w-4" />
+                        <ChevronUp class="ml-2 h-4 w-4" />
                       {:else}
-                        <Icon icon="lucide:chevrons-up-down" class="ml-2 h-4 w-4" />
+                        <ChevronsUpDown class="ml-2 h-4 w-4" />
                       {/if}
                     </Button>
                   {:else}

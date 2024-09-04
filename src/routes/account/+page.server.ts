@@ -1,6 +1,6 @@
-import type { PageServerLoad } from './$types';
-
 import { redirect } from 'sveltekit-flash-message/server';
+
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
   const { locals, url } = event;

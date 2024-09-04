@@ -1,41 +1,17 @@
-<script>
-  import { page } from '$app/stores';
+<script lang="ts">
+  import TheFlash from './TheFlash.svelte';
+
   import '../app.pcss';
 
-  import TheFlash from './TheFlash.svelte';
+  import Footer from '$lib/components/Footer.svelte';
+  import Navbar from '$lib/components/Navbar.svelte';
 </script>
 
-<div class="flex flex-col min-h-[100svh] md:min-h-[100lvh] max-w-7xl mx-auto">
-  <header class="flex justify-between items-center py-4 px-4 xl:px-0">
-    <a href="/" class="no-underline">Home</a>
-    <div class="flex items-center space-x-2">
-      {#if $page.data.is_admin}
-        <a href="/admin" class="no-underline">Admin</a>
-      {/if}
-      {#if $page.data.user_id}
-        <a href="/account" class="no-underline">Account</a>
-      {:else}
-        <a href="/login" class="no-underline">Login</a>
-      {/if}
-    </div>
-  </header>
-  <main class="grow mx-auto w-full relative pt-4 sm:pt-8 md:pt-12 lg:pt-16 xl:pt-20 px-4 xl:px-0">
+<div class="mx-auto flex min-h-[100svh] max-w-7xl flex-col md:min-h-[100lvh]">
+  <Navbar />
+  <main class="relative mx-auto w-full grow px-4 pt-4 sm:pt-8 md:pt-12 lg:pt-16 xl:px-0 xl:pt-20">
     <slot />
     <TheFlash />
   </main>
-  <footer class="mx-auto text-center text-xs text-background py-4">
-    <div class="inline-flex space-x-2">
-      <span>
-        designed, built, and hosted by <a
-          href="https://www.jvp.design"
-          class="text-background"
-          target="_blank"
-        >
-          jvp.design
-        </a>
-        in {new Date().getFullYear()}
-      </span>
-      <a href="/privacy" class="text-background">privacy policy</a>
-    </div>
-  </footer>
+  <Footer />
 </div>

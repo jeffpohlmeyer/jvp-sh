@@ -1,5 +1,16 @@
-import { sql } from 'drizzle-orm';
-import { pgTable, boolean, integer, varchar, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { type InferInsertModel, type InferSelectModel, SQL, sql } from 'drizzle-orm';
+import {
+  type AnyPgColumn,
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar
+} from 'drizzle-orm/pg-core';
+
 import { new_id } from '../../utils/id';
 
 // export const user = pgTable('auth_user', {
@@ -40,34 +51,56 @@ import { new_id } from '../../utils/id';
 //   })
 // });
 
-export const user = pgTable('user', {
-  id: varchar('id')
-    .$defaultFn(() => new_id('user', 16))
-    .primaryKey(),
-  email: varchar('email', {
-    length: 255
+export const userTable = pgTable(
+  'user',
+  {
+    id: varchar('id')
+      .$defaultFn(() => new_id('user', 16))
+      .primaryKey(),
+    email: varchar('email', {
+      length: 255
+    })
+      .notNull()
+      .unique(),
+    hashed_password: varchar('hashed_password', {
+      length: 255
+    }),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    active: boolean('active').notNull().default(false),
+    is_admin: boolean('is_admin').notNull().default(false),
+    token: text('token'),
+    token_expiration: timestamp('token_expiration'),
+    password_reset_required: boolean('password_reset_required').default(false)
+  },
+  (table) => ({
+    // emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(sql`lower(${table.email})`),
+    emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(lower(table.email))
   })
-    .notNull()
-    .unique(),
-  hashed_password: varchar('hashed_password', {
-    length: 255
-  }),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  active: boolean('active').notNull().default(false),
-  is_admin: boolean('is_admin').notNull().default(false)
-});
+);
 
-export const session = pgTable('session', {
+export function lower(email: AnyPgColumn): SQL {
+  return sql`lower(${email})`;
+}
+
+export type UserType = InferSelectModel<typeof userTable>;
+export type NewUserType = InferInsertModel<typeof userTable>;
+
+export const sessionTable = pgTable('session', {
   id: varchar('id')
     .$defaultFn(() => new_id('session', 16))
     .primaryKey(),
-  user_id: varchar('user_id')
+  userId: varchar('user_id')
     .notNull()
-    .references(() => user.id),
-  expires: timestamp('expires').default(sql`now() + '30 days'`)
+    .references(() => userTable.id),
+  expiresAt: timestamp('expires_at', {
+    withTimezone: true,
+    mode: 'date'
+  }).notNull()
 });
 
-export const urls = pgTable('urls', {
+export type SessionType = InferSelectModel<typeof sessionTable>;
+
+export const urlsTable = pgTable('urls', {
   id: varchar('id')
     .$defaultFn(() => new_id('url', 16))
     .primaryKey(),
@@ -76,19 +109,8 @@ export const urls = pgTable('urls', {
   redirect_link: varchar('redirect_link').notNull(),
   version: integer('version').notNull().default(1),
   clicked: integer('clicked').notNull().default(0),
-  user_id: varchar('user_id').references(() => user.id)
+  user_id: varchar('user_id').references(() => userTable.id)
 });
 
-export const token_type_enum = pgEnum('token_type', ['activation', 'reset-password']);
-export const token = pgTable('tokens', {
-  id: varchar('id')
-    .$defaultFn(() => new_id('token', 16))
-    .primaryKey(),
-  token_type: token_type_enum('token_type'),
-  expires: timestamp('expires')
-    .notNull()
-    .default(sql`now() + '60 minutes'`),
-  user_id: varchar('user_id')
-    .notNull()
-    .references(() => user.id)
-});
+export type URLsType = InferSelectModel<typeof urlsTable>;
+export type UrlWithEmailType = URLsType & { email?: string };

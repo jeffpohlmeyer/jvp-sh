@@ -1,98 +1,88 @@
+import { redirect } from 'sveltekit-flash-message/server';
+import { message, superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
 import { fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
-
-import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
-import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/schema';
-import { create_session, set_cookie } from '$lib/utils/auth';
-import { validate } from '$lib/utils/form';
-
+import type { Actions, PageServerLoad } from './$types';
 import { schema } from './utils';
 
-export const load: PageServerLoad = async ({ locals }) => {
-  if (locals?.user?.id) {
-    throw redirect(302, '/');
-  }
+import { BASE_URL } from '$env/static/private';
+import { cannot_be_logged_in } from '$lib/middleware/auth';
+import { lucia } from '$lib/server/auth';
+import { db } from '$lib/server/db';
+import { lower, userTable } from '$lib/server/schema';
+import type { Message } from '$lib/types/super-forms';
+import { create_user_session } from '$lib/utils/auth';
+import { send_mail } from '$lib/utils/email';
+import { send_reset_password_email } from '$lib/utils/email/actions';
+import { new_id } from '$lib/utils/id';
+import { Argon2id } from '$lib/utils/password';
+import { create_user_token } from '$lib/utils/user';
 
-  return { email: '', password: '' };
+export const load: PageServerLoad = async (event) => {
+  cannot_be_logged_in(event);
+
+  return { form: await superValidate(valibot(schema)) };
 };
 
 export const actions: Actions = {
   default: async (event) => {
-    const { request, cookies, url } = event;
-    const formData = Object.fromEntries(await request.formData());
-    const email = formData.email?.toString()?.trim().toLowerCase();
-    const { valid, errors } = validate<{ email: string; password: string }>({
-      schema_object: schema,
-      state_object: formData
-    });
-    if (!valid) {
-      return fail(400, { errors, email });
+    cannot_be_logged_in(event);
+    const form = await superValidate(event.request, valibot(schema));
+    if (!form.valid) {
+      return fail(400, { form });
     }
-    const result = await db.select().from(user).where(eq(user.email, email));
-    let hashed_password = '',
-      active = false,
-      _user = null;
-    if (!result.length) {
-      setFlash(
-        { type: 'error', title: 'Error', message: 'Invalid email or password.', clearable: false },
-        event
-      );
-      return fail(401, {
-        email,
-        error: 'invalid-credentials'
-      });
+
+    const _message: Message = { type: 'error', title: 'Error', text: '' };
+
+    const user = (
+      await db
+        .select()
+        .from(userTable)
+        .where(eq(lower(userTable.email), form.data.email.toLowerCase()))
+        .limit(1)
+    )[0];
+    let valid_password = false;
+    if (user) {
+      if (user.password_reset_required) {
+        const token = await create_user_token(form.data.email.toLowerCase());
+        send_reset_password_email({ token, email: form.data.email.toLowerCase() });
+
+        return redirect(301, '/password-reset-required');
+      }
+      valid_password = await new Argon2id().verify(user.hashed_password!, form.data.password);
+      if (valid_password) {
+        if (!user?.active) {
+          let url = '/login/inactive';
+          url += `?email=${encodeURIComponent(form.data.email.toLowerCase())}`;
+          return redirect(302, url);
+        } else {
+          await create_user_session({ user_id: user.id, event });
+        }
+      } else {
+        _message.text = 'Invalid email or password';
+      }
     } else {
-      _user = result[0];
-      active = _user.active;
-      hashed_password = _user.hashed_password as string;
+      _message.text = 'Invalid email or password';
     }
-    const passwords_match = await bcrypt.compare(formData.password.toString(), hashed_password);
-    if (!passwords_match) {
-      setFlash(
-        { type: 'error', title: 'Error', message: 'Invalid email or password.', clearable: false },
-        event
-      );
-      return fail(401, {
-        email,
-        error: 'invalid-credentials'
-      });
+    if (_message.text) {
+      return message(form, _message);
     }
-    if (!active) {
-      let url = '/login/inactive';
-      if (formData?.email) {
-        url += `?email=${encodeURIComponent(formData.email.toString())}`;
-      }
-      throw redirect(302, url);
-    }
-    if (_user) {
-      try {
-        const session = await create_session(_user.id);
-        await set_cookie({ cookies, session });
-      } catch (err) {
-        console.log('cookie error', err);
-        setFlash(
-          {
-            type: 'error',
-            title: 'Server Error',
-            message: 'There was an error setting your cookie.',
-            clearable: false
-          },
-          event
-        );
-        return fail(401, {
-          email,
-          error: 'cookie-error'
-        });
-      }
-    }
+
     let _redirect = '/';
-    if (url.searchParams.has('redirect')) {
-      _redirect = url.searchParams.get('redirect')!;
+    if (event.url.searchParams.has('redirect')) {
+      _redirect = event.url.searchParams.get('redirect')!;
     }
-    throw redirect(302, _redirect, { type: 'success', message: 'You have been logged in.' }, event);
+    redirect(
+      302,
+      _redirect,
+      {
+        title: 'Login Success',
+        message: 'You have successfully logged in',
+        type: 'success'
+      },
+      event
+    );
   }
 };

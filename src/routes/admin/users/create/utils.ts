@@ -1,7 +1,11 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
-export const schema = {
-  email: z.string().min(1, 'Email is required').email(),
-  active: z.coerce.boolean().default(false),
-  is_admin: z.coerce.boolean().default(false)
-};
+export const schema = v.object({
+  email: v.pipe(
+    v.string('Your email must be a string.'),
+    v.nonEmpty('Please enter your email.'),
+    v.email('The email address is badly formatted.')
+  ),
+  active: v.optional(v.boolean(), false),
+  is_admin: v.optional(v.boolean(), false)
+});
