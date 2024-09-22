@@ -76,7 +76,7 @@ export const actions: Actions = {
     const hashed_password = await new Argon2id().hash(form.data.password);
     await db
       .update(userTable)
-      .set({ hashed_password, token: '', token_expiration: null })
+      .set({ hashed_password, token: '', token_expiration: null, password_reset_required: false })
       .where(eq(userTable.token, event.params.token));
     tell_user_password_has_changed(user.email);
     await create_user_session({ user_id: user.id, event });
